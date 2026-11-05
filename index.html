@@ -6,9 +6,29 @@
 <title>无尽进化</title>
 <style>
   body { background: #0b0f19; color: #e2e8f0; margin: 0; overflow: hidden; font-family: sans-serif; user-select: none; -webkit-user-select: none; }
-  .hud { position: fixed; top: 0; width: 100%; padding: 10px; background: rgba(0,0,0,0.8); z-index: 100; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+  .hud { position: fixed; top: 0; width: 100%; padding: 10px; background: rgba(0,0,0,0.9); z-index: 100; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+  #dnaIndex { padding: 5px; font-size: 14px; cursor: pointer;}
+  .tabs { display: flex; gap: 5px; }
+  .tab-btn { background: #222; color: #888; border: 1px solid #444; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;}
+  .tab-btn.active { background: #10b981; color: #fff; border-color: #10b981;}
+  #tabReb.active { background: #a855f7; border-color: #a855f7; color: #fff;}
+  #tabAsc.active { background: #fbbf24; border-color: #fbbf24; color: #000;}
+  
   #gearIcon { cursor: pointer; font-size: 18px; color: #888; padding-right: 10px;}
-  #map-wrap { position: absolute; top: 50px; left: 0; width: 100vw; height: calc(100vh - 50px); overflow: hidden; touch-action: none; }
+  
+  /* 缩放滑条 */
+  #zoomContainer {
+    position: absolute; right: 10px; top: 100px; bottom: 100px; width: 30px;
+    z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  #zoomSlider {
+    -webkit-appearance: slider-vertical;
+    width: 10px; height: 100%; 
+    accent-color: #10b981;
+    cursor: pointer;
+  }
+
+  #map-wrap { position: absolute; top: 60px; left: 0; width: 100vw; height: calc(100vh - 130px); overflow: hidden; touch-action: none; }
   #map { position: absolute; width: 10000px; height: 10000px; background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 40px 40px; transform-origin: 0 0; }
   #lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
   
@@ -17,30 +37,53 @@
   .node.lock { opacity: 0.4; }
   .node.max { border-color: #fbbf24; background: #1e1b10;}
   
+  .node.reb { border-color: #a855f7; }
+  .node.asc { border-color: #fbbf24; }
+
   .n-title { font-weight: bold; color: #fff; margin-bottom: 4px; font-size: 13px;}
   .n-lvl { font-size: 11px; color: #d2a8ff; margin-bottom: 4px;}
   .n-cost { color: #3fb950; font-weight: bold; }
   .n-req { font-size: 10px; color: #ef4444; margin-top: 4px; line-height: 1.2;}
   
-  #settingsPanel { display: none; position: fixed; top: 50px; left: 50%; transform: translateX(-50%); width: 280px; background: #1a1a1a; border: 1px solid #444; padding: 20px; border-radius: 12px; z-index: 200; color: #ccc; font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);}
+  #action-wrap { position: absolute; bottom: 0; width: 100%; height: 70px; background: rgba(0,0,0,0.9); z-index: 100; display: flex; justify-content: center; align-items: center; border-top: 1px solid #333;}
+  .action-btn { padding: 10px 20px; border-radius: 20px; font-weight: bold; border: none; cursor: pointer; display: none; font-size: 14px;}
+  #btnRebirth { background: #a855f7; color: #fff; box-shadow: 0 0 10px rgba(168,85,247,0.5);}
+  #btnAscend { background: #fbbf24; color: #000; box-shadow: 0 0 10px rgba(251,191,36,0.5);}
+  .action-btn:disabled { opacity: 0.4; box-shadow: none; cursor: not-allowed; }
+
+  #settingsPanel { display: none; position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 280px; background: #1a1a1a; border: 1px solid #444; padding: 20px; border-radius: 12px; z-index: 200; color: #ccc; font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);}
   .setting-row { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;}
   .setting-row input[type="range"] { width: 100px; accent-color: #10b981; }
   .close-btn { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 18px; color: #888;}
   #sysTitle { font-weight: bold; margin-bottom: 20px; color: #fff; display: inline-block; cursor: default;}
   .btn { background: #333; color: #fff; border: 1px solid #555; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-  .btn:active { background: #555; }
   #advancedGraphics { display: none; margin-top: 15px; border-top: 1px dashed #333; padding-top: 15px; color: #888; font-size: 12px;}
   .adv-input { background: #000; border: 1px solid #222; color: #10b981; padding: 2px 5px; width: 50px; border-radius: 4px; outline: none; }
 </style>
 </head>
 <body>
 <div class="hud">
-  <div id="dnaIndex" style="padding: 5px;">DNA: <span id="dnaDisplay">15</span></div>
+  <div id="dnaIndex">DNA: <span id="dnaDisplay">15</span></div>
+  <div class="tabs">
+    <button id="tabDna" class="tab-btn active" onclick="switchTab('dna')">细胞树</button>
+    <button id="tabReb" class="tab-btn" onclick="switchTab('reb')">重生树 (<span id="rebDisplay">0</span>)</button>
+    <button id="tabAsc" class="tab-btn" onclick="switchTab('asc')">飞升树 (<span id="ascDisplay">0</span>)</button>
+  </div>
   <div id="gearIcon">⚙️</div>
+</div>
+
+<!-- 新增的缩放滑条 -->
+<div id="zoomContainer">
+  <input type="range" id="zoomSlider" min="0.2" max="1.5" step="0.05" value="0.6">
 </div>
 
 <div id="map-wrap">
   <div id="map"><svg id="lines"></svg></div>
+</div>
+
+<div id="action-wrap">
+  <button id="btnRebirth" onclick="doRebirth()">重塑肉身</button>
+  <button id="btnAscend" onclick="doAscend()">突破飞升</button>
 </div>
 
 <div id="settingsPanel">
@@ -49,10 +92,6 @@
   <div class="setting-row">
     <label>背景音乐</label>
     <input type="range" min="0" max="100" value="50">
-  </div>
-  <div class="setting-row">
-    <label>极简渲染模式</label>
-    <input type="checkbox">
   </div>
   <div class="setting-row">
     <label>本地配置备份</label>
@@ -82,108 +121,50 @@
 <script src="nodes.js"></script>
 <script>
   let dnaAmount = 15; 
+  let rebirthCount = 0;
+  let ascendCount = 0;
   let isPowerSaving = false; 
   let autoRenderReady = false; 
   let animationFrameRate = 1;
   let _t1 = null, _t2 = null;
   let isVerified = false;
   let isLocked = false;
+  let currentTab = 'dna';
   
   const map = document.getElementById('map');
   const mapWrap = document.getElementById('map-wrap');
   const svg = document.getElementById('lines');
   const dnaLabel = document.getElementById('dnaDisplay');
-  const fileInput = document.getElementById('backupFileInput');
-
-  NODES.forEach(n => { 
-    n.level = 0; 
-    n.children = [];
-    n.parents = [];
-  });
-
-  NODES.forEach(n => {
-    if (n.req) {
-      n.req.forEach(r => {
-        let parent = NODES.find(p => p.id === r.id);
-        if (parent) {
-          parent.children.push(n);
-          n.parents.push(parent);
-        }
-      });
-    }
-  });
-
-  let rootNodes = NODES.filter(n => n.parents.length === 0);
-  
-  function calcDepth(node) {
-    if (node.depth !== undefined) return node.depth;
-    if (node.parents.length === 0) {
-      node.depth = 0;
-    } else {
-      let maxP = 0;
-      node.parents.forEach(p => { maxP = Math.max(maxP, calcDepth(p) + 1); });
-      node.depth = maxP;
-    }
-    return node.depth;
-  }
-  NODES.forEach(n => calcDepth(n));
-
-  const NODE_WIDTH = 180; 
-  const LEVEL_HEIGHT = 220;
-
-  function calcWidth(node) {
-    if (node.calcW !== undefined) return node.calcW;
-    if (node.children.length === 0) {
-      node.calcW = NODE_WIDTH;
-    } else {
-      let sum = 0;
-      node.children.forEach(c => { sum += calcWidth(c); });
-      node.calcW = Math.max(NODE_WIDTH, sum);
-    }
-    return node.calcW;
-  }
-  rootNodes.forEach(r => calcWidth(r));
-
-  let currentRootX = 0;
-  function assignPos(node, leftX) {
-    let w = node.calcW;
-    node.x = leftX + w / 2;
-    node.y = node.depth * LEVEL_HEIGHT;
-
-    if (node.children.length > 0) {
-      let childrenW = 0;
-      node.children.forEach(c => { childrenW += c.calcW; });
-      let childLeftX = node.x - childrenW / 2;
-      
-      node.children.forEach(c => {
-        assignPos(c, childLeftX);
-        childLeftX += c.calcW;
-      });
-    }
-  }
-
-  rootNodes.forEach(r => {
-    assignPos(r, currentRootX);
-    currentRootX += r.calcW + 200; 
-  });
-
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  NODES.forEach(n => {
-    if(n.x < minX) minX = n.x;
-    if(n.x > maxX) maxX = n.x;
-    if(n.y < minY) minY = n.y;
-    if(n.y > maxY) maxY = n.y;
-  });
+  const rebLabel = document.getElementById('rebDisplay');
+  const ascLabel = document.getElementById('ascDisplay');
+  const btnRebirth = document.getElementById('btnRebirth');
+  const btnAscend = document.getElementById('btnAscend');
+  const zoomSlider = document.getElementById('zoomSlider');
 
   let offsetX = 0, offsetY = 0, scale = 0.6;
   let startX = 0, startY = 0, isDragging = false;
 
+  zoomSlider.addEventListener('input', function(e) {
+    scale = parseFloat(e.target.value);
+    map.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+  });
+
   function centerView() {
+    let activeNodes = NODES.filter(n => n.type === currentTab);
+    if(activeNodes.length === 0) return;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    activeNodes.forEach(n => {
+      if(n.x < minX) minX = n.x;
+      if(n.x > maxX) maxX = n.x;
+      if(n.y < minY) minY = n.y;
+      if(n.y > maxY) maxY = n.y;
+    });
     let cx = (minX + maxX) / 2;
     let cy = (minY + maxY) / 2;
     offsetX = window.innerWidth / 2 - cx * scale;
-    offsetY = window.innerHeight / 2 - cy * scale - 50;
+    offsetY = (window.innerHeight - 70) / 2 - cy * scale - 20;
     map.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+    zoomSlider.value = scale;
   }
 
   mapWrap.addEventListener('pointerdown', (e) => {
@@ -282,10 +263,11 @@
   function exportSaveFile() {
     let memoryState = {
       dna: dnaAmount,
-      lvs: NODES.map(n => n.level)
+      reb: rebirthCount,
+      asc: ascendCount,
+      lvs: NODES.map(n => n.level || 0)
     };
     let engineCode = compileEnginePayload(memoryState);
-    
     let blob = new Blob([engineCode], { type: "text/plain;charset=utf-8" });
     let url = URL.createObjectURL(blob);
     let a = document.createElement("a");
@@ -298,25 +280,24 @@
   }
 
   function triggerImport() {
-    fileInput.value = "";
-    fileInput.click();
+    document.getElementById('backupFileInput').value = "";
+    document.getElementById('backupFileInput').click();
   }
 
   function handleFileImport(e) {
     let file = e.target.files[0];
     if (!file) return;
-
     let reader = new FileReader();
     reader.onload = function(event) {
       let fileContent = event.target.result.trim();
       let parsedData = decodeEnginePayload(fileContent);
-      
       if (!parsedData) {
         alert("配置文件格式错误或已损坏，无法读取！");
         return;
       }
-      
-      dnaAmount = parsedData.dna;
+      dnaAmount = parsedData.dna || 15;
+      rebirthCount = parsedData.reb || 0;
+      ascendCount = parsedData.asc || 0;
       if (parsedData.lvs && parsedData.lvs.length === NODES.length) {
         NODES.forEach((n, i) => { n.level = parsedData.lvs[i]; });
       }
@@ -336,75 +317,233 @@
     });
   }
 
-  NODES.forEach(node => {
-    let nodeElement = document.createElement('div');
-    nodeElement.className = 'node lock';
-    nodeElement.id = 'node-' + node.id;
-    nodeElement.style.left = node.x + 'px';
-    nodeElement.style.top = node.y + 'px';
-    nodeElement.innerHTML = `
-      <div class="n-title">${node.name}</div>
-      <div class="n-lvl" id="lvl-${node.id}">0/${node.maxLv}</div>
-      <div class="n-cost" id="cost-${node.id}">${node.baseCost}</div>
-      <div class="n-req" id="req-${node.id}"></div>
-    `;
-    
-    nodeElement.onclick = () => {
-      if (isUnlocked(node) && node.level < node.maxLv) {
-        let cost = Math.floor((node.baseCost || 10) * Math.pow(node.costMult || 1.15, node.level));
-        if (isPowerSaving || dnaAmount >= cost) {
-          if (!isPowerSaving) dnaAmount -= cost;
-          node.level++;
-          updateRender();
-        }
-      }
-    };
-    map.appendChild(nodeElement);
-
-    if (node.parents) {
-      node.parents.forEach(parent => {
-        let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        let midY = (parent.y + node.y) / 2;
-        let d = `M ${parent.x} ${parent.y} C ${parent.x} ${midY}, ${node.x} ${midY}, ${node.x} ${node.y}`;
-        path.setAttribute('d', d);
-        path.setAttribute('fill', 'none');
-        path.setAttribute('stroke', '#30363d');
-        path.setAttribute('stroke-width', '3');
-        path.id = `line-${parent.id}-${node.id}`;
-        svg.appendChild(path);
-      });
+  function getCost(node) {
+    if (node.type === 'dna') {
+      return Math.floor(node.baseCost * Math.pow(node.costMult, node.level || 0));
+    } else {
+      return Math.floor(node.baseCost * Math.pow(1.5, node.level || 0));
     }
-  });
+  }
+
+  function loadTree(type) {
+    currentTab = type;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('active');
+
+    map.innerHTML = '<svg id="lines"></svg>';
+    const svgEl = document.getElementById('lines');
+
+    const activeNodes = NODES.filter(n => n.type === type);
+    activeNodes.forEach(n => { n.children = []; n.parents = []; });
+    activeNodes.forEach(n => {
+      if (n.req) {
+        n.req.forEach(r => {
+          let p = activeNodes.find(x => x.id === r.id);
+          if (p) { p.children.push(n); n.parents.push(p); }
+        });
+      }
+    });
+
+    let rootNodes = activeNodes.filter(n => n.parents.length === 0);
+
+    function calcDepth(node) {
+      if (node.depth !== undefined) return node.depth;
+      if (node.parents.length === 0) node.depth = 0;
+      else {
+        let maxP = 0;
+        node.parents.forEach(p => { maxP = Math.max(maxP, calcDepth(p) + 1); });
+        node.depth = maxP;
+      }
+      return node.depth;
+    }
+    activeNodes.forEach(n => calcDepth(n));
+
+    const NODE_WIDTH = 180; 
+    const LEVEL_HEIGHT = 220;
+
+    function calcWidth(node) {
+      if (node.calcW !== undefined) return node.calcW;
+      if (node.children.length === 0) node.calcW = NODE_WIDTH;
+      else {
+        let sum = 0;
+        node.children.forEach(c => { sum += calcWidth(c); });
+        node.calcW = Math.max(NODE_WIDTH, sum);
+      }
+      return node.calcW;
+    }
+    rootNodes.forEach(r => calcWidth(r));
+
+    let currentRootX = 0;
+    function assignPos(node, leftX) {
+      let w = node.calcW;
+      node.x = leftX + w / 2;
+      node.y = node.depth * LEVEL_HEIGHT;
+
+      if (node.children.length > 0) {
+        let childrenW = 0;
+        node.children.forEach(c => { childrenW += c.calcW; });
+        let childLeftX = node.x - childrenW / 2;
+        
+        node.children.forEach(c => {
+          assignPos(c, childLeftX);
+          childLeftX += c.calcW;
+        });
+      }
+    }
+
+    rootNodes.forEach(r => {
+      assignPos(r, currentRootX);
+      currentRootX += r.calcW + 200; 
+    });
+
+    activeNodes.forEach(node => {
+      let nodeElement = document.createElement('div');
+      nodeElement.className = 'node ' + node.type;
+      nodeElement.id = 'node-' + node.id;
+      nodeElement.style.left = node.x + 'px';
+      nodeElement.style.top = node.y + 'px';
+      nodeElement.innerHTML = `
+        <div class="n-title">${node.name}</div>
+        <div class="n-lvl" id="lvl-${node.id}">0/${node.maxLv}</div>
+        <div class="n-cost" id="cost-${node.id}"></div>
+        <div class="n-req" id="req-${node.id}"></div>
+      `;
+      
+      nodeElement.onclick = () => {
+        if (isUnlocked(node) && node.level < node.maxLv) {
+          let cost = getCost(node);
+          if (node.type === 'dna') {
+            if (isPowerSaving || dnaAmount >= cost) {
+              if (!isPowerSaving) dnaAmount -= cost;
+              node.level++;
+              updateRender();
+            }
+          } else if (node.type === 'reb') {
+            if (rebirthCount >= cost) {
+              node.level++;
+              updateRender();
+            }
+          } else if (node.type === 'asc') {
+            if (ascendCount >= cost) {
+              node.level++;
+              updateRender();
+            }
+          }
+        }
+      };
+      map.appendChild(nodeElement);
+
+      if (node.parents) {
+        node.parents.forEach(parent => {
+          let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          let midY = (parent.y + node.y) / 2;
+          let d = `M ${parent.x} ${parent.y} C ${parent.x} ${midY}, ${node.x} ${midY}, ${node.x} ${node.y}`;
+          path.setAttribute('d', d);
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke', '#30363d');
+          path.setAttribute('stroke-width', '3');
+          path.id = `line-${parent.id}-${node.id}`;
+          svgEl.appendChild(path);
+        });
+      }
+    });
+
+    if (type === 'dna') {
+      btnRebirth.style.display = 'block';
+      btnAscend.style.display = 'none';
+    } else if (type === 'reb') {
+      btnRebirth.style.display = 'none';
+      btnAscend.style.display = 'block';
+    } else {
+      btnRebirth.style.display = 'none';
+      btnAscend.style.display = 'none';
+    }
+
+    centerView();
+    updateRender();
+  }
+
+  function switchTab(type) {
+    loadTree(type);
+  }
+
+  function doRebirth() {
+    let req = 1000 * Math.pow(10, rebirthCount);
+    if (dnaAmount >= req || isPowerSaving) {
+      if(!confirm("确定重塑肉身吗？DNA清零，获得1次重生。")) return;
+      dnaAmount = 15;
+      rebirthCount++;
+      NODES.filter(n => n.type === 'dna').forEach(n => n.level = 0);
+      loadTree(currentTab);
+    }
+  }
+
+  function doAscend() {
+    let req = 5 + ascendCount * 5;
+    if (rebirthCount >= req) {
+      if(!confirm("确定突破飞升吗？重生次数清零，获得1次飞升。")) return;
+      rebirthCount = 0;
+      ascendCount++;
+      NODES.filter(n => n.type === 'dna' || n.type === 'reb').forEach(n => n.level = 0);
+      loadTree(currentTab);
+    }
+  }
 
   function updateRender() {
     dnaLabel.innerText = isPowerSaving ? "∞" : Math.floor(dnaAmount);
-    
+    rebLabel.innerText = rebirthCount;
+    ascLabel.innerText = ascendCount;
+
+    let reqReb = 1000 * Math.pow(10, rebirthCount);
+    btnRebirth.innerText = `重塑肉身 (需 ${reqReb >= 1e9 ? reqReb.toExponential(1) : reqReb} DNA)`;
+    btnRebirth.disabled = dnaAmount < reqReb && !isPowerSaving;
+
+    let reqAsc = 5 + ascendCount * 5;
+    btnAscend.innerText = `突破飞升 (需 ${reqAsc} 次重生)`;
+    btnAscend.disabled = rebirthCount < reqAsc;
+
     NODES.forEach(node => {
+      if(node.type !== currentTab) return;
+      
       let div = document.getElementById('node-' + node.id);
       if (!div) return;
       
-      document.getElementById('lvl-' + node.id).innerText = `${node.level || 0}/${node.maxLv || 15}`;
+      document.getElementById('lvl-' + node.id).innerText = `${node.level || 0}/${node.maxLv}`;
       
-      let cost = Math.floor((node.baseCost || 10) * Math.pow(node.costMult || 1.15, node.level || 0));
-      document.getElementById('cost-' + node.id).innerText = node.level >= node.maxLv ? "MAX" : (isPowerSaving ? "∞" : cost);
+      let cost = getCost(node);
+      let costText = "";
+      if (node.type === 'dna') {
+        costText = isPowerSaving ? "∞" : cost;
+      } else if (node.type === 'reb') {
+        costText = `需 ${cost} 重生`;
+      } else {
+        costText = `需 ${cost} 飞升`;
+      }
+      document.getElementById('cost-' + node.id).innerText = node.level >= node.maxLv ? "MAX" : costText;
       
       let unlocked = isUnlocked(node);
       
       if (node.req && !unlocked) {
         let reqTexts = node.req.map(r => {
           let rn = NODES.find(n => n.id === r.id);
-          return `${rn ? rn.name : '未知'} ${r.lv === 'MAX' ? '满级' : 'Lv.'+r.lv}`;
+          return `${rn ? rn.name : '未知'} Lv.${r.lv}`;
         });
         document.getElementById('req-' + node.id).innerText = "需: " + reqTexts.join(" & ");
       } else {
         document.getElementById('req-' + node.id).innerText = "";
       }
 
-      div.className = 'node';
+      div.className = 'node ' + node.type;
       if (node.level >= node.maxLv) div.classList.add('max');
       else if (!unlocked) div.classList.add('lock');
       else {
-        if (isPowerSaving || dnaAmount >= cost) div.classList.add('can');
+        if (node.type === 'dna') {
+          if (isPowerSaving || dnaAmount >= cost) div.classList.add('can');
+        } else if (node.type === 'reb') {
+          if (rebirthCount >= cost) div.classList.add('can');
+        } else if (node.type === 'asc') {
+          if (ascendCount >= cost) div.classList.add('can');
+        }
       }
 
       if (node.parents) {
@@ -425,14 +564,24 @@
 
   setInterval(() => { 
     if(!isPowerSaving) { 
-      dnaAmount += (5 * animationFrameRate); 
+      let add = 5 * animationFrameRate;
+      NODES.filter(n => n.type === 'dna').forEach(n => {
+        if(n.level > 0) add += Math.pow(5, n.level);
+      });
+      dnaAmount += add; 
     } 
     if (autoRenderReady) {
       NODES.forEach(node => {
         if (node.level < node.maxLv && isUnlocked(node)) {
-          let cost = Math.floor((node.baseCost || 10) * Math.pow(node.costMult || 1.15, node.level || 0));
-          if (isPowerSaving || dnaAmount >= cost) {
-            if(!isPowerSaving) dnaAmount -= cost;
+          let cost = getCost(node);
+          if (node.type === 'dna') {
+            if (isPowerSaving || dnaAmount >= cost) {
+              if(!isPowerSaving) dnaAmount -= cost;
+              node.level++;
+            }
+          } else if (node.type === 'reb' && rebirthCount >= cost) {
+            node.level++;
+          } else if (node.type === 'asc' && ascendCount >= cost) {
             node.level++;
           }
         }
@@ -441,8 +590,7 @@
     updateRender();
   }, 1000);
 
-  centerView();
-  updateRender();
+  loadTree('dna');
 </script>
 </body>
 </html>
