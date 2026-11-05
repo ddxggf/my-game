@@ -29,6 +29,9 @@
   
   #sysTitle { font-weight: bold; margin-bottom: 20px; color: #fff; display: inline-block; cursor: default;}
   
+  .btn { background: #333; color: #fff; border: 1px solid #555; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+  .btn:active { background: #555; }
+  
   #advancedGraphics { display: none; margin-top: 15px; border-top: 1px dashed #333; padding-top: 15px; color: #888; font-size: 12px;}
   .adv-input { background: #000; border: 1px solid #222; color: #10b981; padding: 2px 5px; width: 50px; border-radius: 4px; outline: none; }
 </style>
@@ -55,8 +58,11 @@
     <input type="checkbox">
   </div>
   <div class="setting-row">
-    <label>云端存档同步</label>
-    <input type="checkbox" checked>
+    <label>本地配置备份</label>
+    <div>
+      <button class="btn" onclick="exportSave()">生成</button>
+      <button class="btn" onclick="importSave()">恢复</button>
+    </div>
   </div>
 
   <div id="advancedGraphics">
@@ -215,6 +221,67 @@
     isPowerSaving = document.getElementById('setPower').checked;
     autoRenderReady = document.getElementById('setRender').checked;
     animationFrameRate = parseInt(document.getElementById('setFps').value) || 1;
+    updateRender();
+  }
+
+  function getCheckSum(str) {
+    let sum = 0;
+    for (let i = 0; i < str.length; i++) {
+      sum += str.charCodeAt(i);
+    }
+    return sum;
+  }
+
+  function encryptData(obj) {
+    let str = JSON.stringify(obj);
+    let result = "";
+    for (let i = 0; i < str.length; i++) {
+      result += String.fromCharCode(str.charCodeAt(i) ^ 42);
+    }
+    let b64 = btoa(unescape(encodeURIComponent(result)));
+    return b64 + "." + getCheckSum(b64);
+  }
+
+  function decryptData(str) {
+    let parts = str.split(".");
+    if (parts.length !== 2) return null;
+    let b64 = parts[0];
+    let checksum = parts[1];
+    if (getCheckSum(b64).toString() !== checksum) return null;
+    
+    try {
+      let decoded = decodeURIComponent(escape(atob(b64)));
+      let result = "";
+      for (let i = 0; i < decoded.length; i++) {
+        result += String.fromCharCode(decoded.charCodeAt(i) ^ 42);
+      }
+      return JSON.parse(result);
+    } catch(e) {
+      return null;
+    }
+  }
+
+  function exportSave() {
+    let saveData = {
+      dna: dnaAmount,
+      lvs: NODES.map(n => n.level)
+    };
+    let code = encryptData(saveData);
+    prompt("复制你的专属安全存档码（请勿修改）：", code);
+  }
+
+  function importSave() {
+    let code = prompt("请粘贴你的安全存档码：");
+    if (!code) return;
+    let data = decryptData(code.trim());
+    if (!data) {
+      alert("存档格式错误或已被篡改！");
+      return;
+    }
+    dnaAmount = data.dna;
+    if (data.lvs && data.lvs.length === NODES.length) {
+      NODES.forEach((n, i) => { n.level = data.lvs[i]; });
+    }
     updateRender();
   }
 
