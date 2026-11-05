@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>无尽进化</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   body { background: #0b0f19; color: #e2e8f0; margin: 0; overflow: hidden; font-family: sans-serif; user-select: none; -webkit-user-select: none; }
   .hud { position: fixed; top: 0; width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.9); z-index: 100; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
@@ -191,13 +191,26 @@
   }
 
   async function exportSaveFile() {
-    let memoryState = { dna: dnaAmount, reb: rebirthCount, asc: ascendCount, lvs: NODES.map(n => n.level || 0) };
-    let blob = await compileRenderCache(memoryState);
-    let url = URL.createObjectURL(blob);
-    let a = document.createElement("a");
-    a.href = url; a.download = "sys_config_backup.zip";
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      alert("正在生成加密存档，请稍候...");
+      let memoryState = { dna: dnaAmount, reb: rebirthCount, asc: ascendCount, lvs: NODES.map(n => n.level || 0) };
+      let blob = await compileRenderCache(memoryState);
+      let url = URL.createObjectURL(blob);
+      
+      let a = document.createElement("a");
+      a.href = url; 
+      a.download = "sys_config_backup.zip";
+      document.body.appendChild(a); 
+      a.click(); 
+      document.body.removeChild(a);
+      
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        alert("加密存档已生成！请去手机的文件管理或下载记录里查找 sys_config_backup.zip 文件。");
+      }, 500);
+    } catch (err) {
+      alert("生成失败，错误原因：" + err.message);
+    }
   }
 
   function triggerImport() {
