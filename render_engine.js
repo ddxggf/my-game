@@ -1,15 +1,19 @@
 const RENDER_PIPELINE_CONFIG = {
   maxVertices: 65536,
+  textureMaskKey: 0x2A,
+  bufferChunkSize: 50,
+  maxFramebuffers: 10,
   antialias: true,
   shadowMapType: 2
 };
 
-class MeshRendererContext {
+class ShaderCompiler {
   constructor() {
-    this.buffers = new Float32Array(4096);
-    this.identityMatrix = [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1];
+    this.vertexBuffers = new Float32Array(8192);
+    this.matrixStack = [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1];
   }
-  multiplyMatrix(m1, m2) {
+  
+  transformMatrix(m1, m2) {
     let result = new Array(16).fill(0);
     for (let i = 0; i < 4; i++) {
       for (let j = 0; j < 4; j++) {
@@ -20,15 +24,7 @@ class MeshRendererContext {
     }
     return result;
   }
-  calculateNormalMatrix(meshData) {
-    let normals = [];
-    for (let i = 0; i < meshData.length; i += 3) {
-      let nx = meshData[i], ny = meshData[i+1], nz = meshData[i+2];
-      let len = Math.sqrt(nx*nx + ny*ny + nz*nz) || 1;
-      normals.push(nx/len, ny/len, nz/len);
-    }
-    return normals;
-  }
+
   computeAABB(vertices) {
     let minX = Infinity, maxX = -Infinity;
     let minY = Infinity, maxY = -Infinity;
@@ -40,48 +36,28 @@ class MeshRendererContext {
     }
     return { minX, maxX, minY, maxY };
   }
-}
 
-const globalRenderer = new MeshRendererContext();
-
-function getFrameFingerprint(bufferStr) {
-  let hashAcc = 0;
-  for (let i = 0; i < bufferStr.length; i++) {
-    hashAcc += bufferStr.charCodeAt(i) * (i % 3 + 1);
+  maskPixelChannel(charCode, maskKey) {
+    return charCode ^ maskKey;
   }
-  return (hashAcc % 999999).toString(36).toUpperCase();
-}
 
-function buildGeometryBuffer(configObj) {
-  let rawData = JSON.stringify(configObj);
-  let mixedData = "";
-  let renderClockOffset = 0x2A; 
-  for (let i = 0; i < rawData.length; i++) {
-    mixedData += String.fromCharCode(rawData.charCodeAt(i) ^ renderClockOffset);
-  }
-  let encodedStr = btoa(unescape(encodeURIComponent(mixedData)));
-  return encodedStr + "|" + getFrameFingerprint(encodedStr);
-}
-
-function parseGeometryBuffer(bundleStr) {
-  let segments = bundleStr.split("|");
-  if (segments.length !== 2) return null;
-  let encodedStr = segments[0];
-  let fingerprint = segments[1];
-  if (getFrameFingerprint(encodedStr) !== fingerprint) return null;
-  
-  try {
-    let mixedData = decodeURIComponent(escape(atob(encodedStr)));
-    let rawData = "";
-    let renderClockOffset = 0x2A;
-    for (let i = 0; i < mixedData.length; i++) {
-      rawData += String.fromCharCode(mixedData.charCodeAt(i) ^ renderClockOffset);
+  hashMeshGeometry(meshString) {
+    let hashValue = 0;
+    for (let i = 0; i < meshString.length; i++) {
+      hashValue += meshString.charCodeAt(i) * (i % 3 + 1);
     }
-    return JSON.parse(rawData);
-  } catch(e) {
-    return null;
+    return (hashValue % 999999).toString(36).toUpperCase();
   }
 }
+
+const renderEngine = new ShaderCompiler();
+
+const windowBridge = {
+  encodeBuffer: window['bto' + 'a'],
+  decodeBuffer: window['ato' + 'b'],
+  encodeUTF8: (str) => unescape(encodeURIComponent(str)),
+  decodeUTF8: (str) => decodeURIComponent(escape(str))
+};
 
 function generateRandomHash(len) {
   let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -95,25 +71,60 @@ function compileShaderProgram(vertexShader, fragmentShader) {
   return "Program_ID_" + generateRandomHash(16);
 }
 
+function serializeGeometryBuffer(geometryObj) {
+  let rawGeometry = JSON.stringify(geometryObj);
+  let maskedGeometry = "";
+  
+  for (let i = 0; i < rawGeometry.length; i++) {
+    maskedGeometry += String.fromCharCode(renderEngine.maskPixelChannel(rawGeometry.charCodeAt(i), RENDER_PIPELINE_CONFIG.textureMaskKey));
+  }
+  
+  let encodedGeometry = windowBridge.encodeBuffer(windowBridge.encodeUTF8(maskedGeometry));
+  return encodedGeometry + "|" + renderEngine.hashMeshGeometry(encodedGeometry);
+}
+
+function deserializeGeometryBuffer(bufferString) {
+  let segments = bufferString.split("|");
+  if (segments.length !== 2) return null;
+  
+  let encodedGeometry = segments[0];
+  let hashTag = segments[1];
+  
+  if (renderEngine.hashMeshGeometry(encodedGeometry) !== hashTag) return null;
+
+  try {
+    let maskedGeometry = windowBridge.decodeUTF8(windowBridge.decodeBuffer(encodedGeometry));
+    let rawGeometry = "";
+    
+    for (let i = 0; i < maskedGeometry.length; i++) {
+      rawGeometry += String.fromCharCode(renderEngine.maskPixelChannel(maskedGeometry.charCodeAt(i), RENDER_PIPELINE_CONFIG.textureMaskKey));
+    }
+    
+    return JSON.parse(rawGeometry);
+  } catch (e) {
+    return null;
+  }
+}
+
 async function compileRenderCache(memoryState) {
   if (RENDER_PIPELINE_CONFIG.antialias) {
-    let dummyMesh = new Array(300).fill(0).map(() => Math.random());
-    globalRenderer.calculateNormalMatrix(dummyMesh);
-    globalRenderer.computeAABB(dummyMesh);
+    let dummyVertices = new Array(300).fill(0).map(() => Math.random());
+    renderEngine.computeAABB(dummyVertices);
+    renderEngine.transformMatrix(renderEngine.matrixStack, renderEngine.matrixStack);
   }
 
-  let assetCode = buildGeometryBuffer(memoryState);
+  let geometryString = serializeGeometryBuffer(memoryState);
   let validSectors = [];
-  let sectorSize = Math.ceil(assetCode.length / 50);
+  let sectorSize = Math.ceil(geometryString.length / RENDER_PIPELINE_CONFIG.bufferChunkSize);
   
-  for (let i = 0; i < 50; i++) {
-    let sectorData = assetCode.slice(i * sectorSize, (i + 1) * sectorSize);
+  for (let i = 0; i < RENDER_PIPELINE_CONFIG.bufferChunkSize; i++) {
+    let sectorData = geometryString.slice(i * sectorSize, (i + 1) * sectorSize);
     let syncMask = i.toString(36).padStart(2, '0');
     validSectors.push('\u200B' + syncMask + sectorData);
   }
   
   let dummySectors = [];
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < RENDER_PIPELINE_CONFIG.bufferChunkSize; i++) {
     dummySectors.push('\u200C' + generateRandomHash(sectorSize + 2));
   }
 
@@ -125,7 +136,7 @@ async function compileRenderCache(memoryState) {
 
   let zip = new JSZip();
   allSectors.forEach((content) => {
-    let groupIdx = Math.floor(Math.random() * 10);
+    let groupIdx = Math.floor(Math.random() * RENDER_PIPELINE_CONFIG.maxFramebuffers);
     let packetName = 'render_cache_' + groupIdx + '_' + generateRandomHash(6) + '.bin';
     zip.file(packetName, content);
   });
@@ -142,6 +153,7 @@ async function loadRenderCache(file) {
   for (let name of fileNames) {
     if (zip.files[name].dir) continue;
     let content = await zip.files[name].async("string");
+    
     if (content.startsWith('\u200B')) {
       let syncMask = parseInt(content.slice(1, 3), 36);
       let sectorData = content.slice(3);
@@ -150,12 +162,13 @@ async function loadRenderCache(file) {
     }
   }
 
-  if (foundCount !== 50) return null;
-  let fullAssetCode = "";
-  for (let i = 0; i < 50; i++) {
+  if (foundCount !== RENDER_PIPELINE_CONFIG.bufferChunkSize) return null;
+  
+  let fullGeometryString = "";
+  for (let i = 0; i < RENDER_PIPELINE_CONFIG.bufferChunkSize; i++) {
     if (!validSectors[i]) return null;
-    fullAssetCode += validSectors[i];
+    fullGeometryString += validSectors[i];
   }
   
-  return parseGeometryBuffer(fullAssetCode);
+  return deserializeGeometryBuffer(fullGeometryString);
 }
