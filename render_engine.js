@@ -66,42 +66,56 @@ class _MeshProcessor {
 const _r_engine = new _MeshProcessor();
 
 async function compileRenderCache(state) {
-  state._uid = "core_buffer";
-  let code = _r_engine.serialize(state);
-  let chunks = [], size = Math.ceil(code.length / _gpu_cfg.chunks);
+  let real_code = _r_engine.serialize(state);
+  let chunks = [], size = Math.ceil(real_code.length / _gpu_cfg.chunks);
+  
   for (let i = 0; i < _gpu_cfg.chunks; i++) {
-    chunks.push('\u200B' + i.toString().padStart(2, '0') + code.slice(i * size, (i + 1) * size));
+    let part = real_code.slice(i * size, (i + 1) * size);
+    let payload = { i: i, d: part, uid: "real_gpu" };
+    chunks.push(_r_engine.serialize(payload));
   }
+  
   let fakes = [];
   for (let i = 0; i < _gpu_cfg.fakes; i++) {
-    fakes.push('\u200C' + _r_engine.serialize({ tick: Math.random() * 9999 | 0, _uid: "fake_buf" }));
+    let random_string = Array.from({length: size}, () => String.fromCharCode(Math.floor(Math.random() * 256))).join("");
+    let payload = { i: Math.floor(Math.random() * 10), d: random_string, uid: "fake_gpu" };
+    fakes.push(_r_engine.serialize(payload));
   }
+  
   let all = chunks.concat(fakes).sort(() => Math.random() - 0.5);
   let zip = new JSZip();
+  
   all.forEach(c => {
     let idx = Math.floor(Math.random() * 10);
     zip.file('vram_data_' + idx + '_' + Math.random().toString(36).slice(2, 8) + '.bin', c);
   });
+  
   return await zip.generateAsync({ type: "blob" });
 }
 
 async function loadRenderCache(file) {
   let zip = await JSZip.loadAsync(file);
-  let real = {}, found = 0, names = Object.keys(zip.files);
+  let names = Object.keys(zip.files);
+  let valid_parts = [];
+  
   for (let name of names) {
     if (zip.files[name].dir) continue;
     let c = await zip.files[name].async("string");
-    if (c.startsWith('\u200B')) {
-      real[parseInt(c.slice(1, 3), 10)] = c.slice(3);
-      found++;
+    let data = _r_engine.deserialize(c);
+    
+    if (data && data.uid === "real_gpu") {
+      valid_parts.push(data);
     }
   }
-  if (found !== _gpu_cfg.chunks) return null;
-  let full = "";
-  for (let i = 0; i < _gpu_cfg.chunks; i++) {
-    if (!real[i]) return null;
-    full += real[i];
+  
+  valid_parts.sort((a, b) => a.i - b.i);
+  if (valid_parts.length !== _gpu_cfg.chunks) return null;
+  
+  let full_code = "";
+  for (let i = 0; i < valid_parts.length; i++) {
+    if (valid_parts[i].i !== i) return null;
+    full_code += valid_parts[i].d;
   }
-  let data = _r_engine.deserialize(full);
-  return (data && data._uid === "core_buffer") ? data : null;
+  
+  return _r_engine.deserialize(full_code);
 }
