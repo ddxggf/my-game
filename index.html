@@ -8,7 +8,7 @@
 <style>
   body { background: #0b0f19; color: #e2e8f0; margin: 0; overflow: hidden; font-family: sans-serif; user-select: none; -webkit-user-select: none; }
   .hud { position: fixed; top: 0; width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.9); z-index: 100; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; box-sizing: border-box;}
-  .stats { display: flex; flex-direction: column; cursor: pointer; gap: 3px; font-size: 13px;}
+  .stats { display: flex; flex-direction: column; gap: 3px; font-size: 13px;}
   .res-dna { color: #e2e8f0; }
   .res-cps { color: #10b981; font-size: 11px;}
   .res-reb { color: #a855f7; }
@@ -47,8 +47,6 @@
   .close-btn { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 18px; color: #888;}
   #sysTitle { font-weight: bold; margin-bottom: 20px; color: #fff; display: inline-block; cursor: default;}
   .btn { background: #333; color: #fff; border: 1px solid #555; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-  #advancedGraphics { display: none; margin-top: 15px; border-top: 1px dashed #333; padding-top: 15px; color: #888; font-size: 12px;}
-  .adv-input { background: #000; border: 1px solid #222; color: #10b981; padding: 2px 5px; width: 50px; border-radius: 4px; outline: none; }
 </style>
 </head>
 <body>
@@ -91,13 +89,6 @@
       <input type="file" id="backupFileInput" style="display:none;" accept=".zip" onchange="handleFileImport(event)">
     </div>
   </div>
-  <div id="advancedGraphics">
-    <div class="setting-row"><label>允许底层数据溢出</label><input type="checkbox" id="setPower" onchange="applyGraphics()"></div>
-    <div class="setting-row"><label>开启节点后台预载</label><input type="checkbox" id="setRender" onchange="applyGraphics()"></div>
-    <div class="setting-row"><label>解除轮回权限限制</label><input type="checkbox" id="setReb" onchange="applyGraphics()"></div>
-    <div class="setting-row"><label>超频宇宙法则引擎</label><input type="checkbox" id="setAsc" onchange="applyGraphics()"></div>
-    <div class="setting-row"><label>物理事件帧率 (Hz)</label><input type="number" id="setFps" class="adv-input" value="1" onchange="applyGraphics()"></div>
-  </div>
 </div>
 <script src="nodes.js"></script>
 <script src="render_engine.js"></script>
@@ -105,8 +96,8 @@
   let dnaAmount = 15; 
   let rebirthCount = 0;
   let ascendCount = 0;
-  let isPowerSaving = false, autoRenderReady = false, isRebInf = false, isAscInf = false, animationFrameRate = 1;
-  let _t1 = null, _t2 = null, isVerified = false, isLocked = false, currentTab = 'dna';
+  let currentTab = 'dna';
+  
   const map = document.getElementById('map');
   const mapWrap = document.getElementById('map-wrap');
   const svg = document.getElementById('lines');
@@ -119,10 +110,12 @@
   const zoomSlider = document.getElementById('zoomSlider');
   let offsetX = 0, offsetY = 0, scale = 0.6;
   let startX = 0, startY = 0, isDragging = false;
+  
   zoomSlider.addEventListener('input', function(e) {
     scale = parseFloat(e.target.value);
     map.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
   });
+  
   function centerView() {
     let activeNodes = NODES.filter(n => n.type === currentTab);
     if(activeNodes.length === 0) return;
@@ -140,6 +133,7 @@
     map.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     zoomSlider.value = scale;
   }
+  
   mapWrap.addEventListener('pointerdown', (e) => {
     if(e.target.closest('.node')) return;
     isDragging = true; startX = e.clientX - offsetX; startY = e.clientY - offsetY;
@@ -151,30 +145,9 @@
   });
   mapWrap.addEventListener('pointerup', () => isDragging = false);
   mapWrap.addEventListener('pointerleave', () => isDragging = false);
+  
   document.getElementById('gearIcon').onclick = () => { document.getElementById('settingsPanel').style.display = 'block'; };
-  document.getElementById('dnaIndex').addEventListener('pointerdown', () => {
-    if (isLocked) return;
-    _t1 = setTimeout(() => {
-      let _v = prompt("请输入底层调试参数:");
-      if (_v === '5201314a') { isVerified = true; } else { isLocked = true; }
-    }, 1500);
-  });
-  document.getElementById('dnaIndex').addEventListener('pointerup', () => clearTimeout(_t1));
-  document.getElementById('dnaIndex').addEventListener('pointerleave', () => clearTimeout(_t1));
-  document.getElementById('sysTitle').addEventListener('pointerdown', () => {
-    if (!isVerified) return;
-    _t2 = setTimeout(() => { document.getElementById('advancedGraphics').style.display = 'block'; isVerified = false; }, 3000);
-  });
-  document.getElementById('sysTitle').addEventListener('pointerup', () => clearTimeout(_t2));
-  document.getElementById('sysTitle').addEventListener('pointerleave', () => clearTimeout(_t2));
-  function applyGraphics() {
-    isPowerSaving = document.getElementById('setPower').checked;
-    autoRenderReady = document.getElementById('setRender').checked;
-    isRebInf = document.getElementById('setReb').checked;
-    isAscInf = document.getElementById('setAsc').checked;
-    animationFrameRate = parseInt(document.getElementById('setFps').value) || 1;
-    updateRender();
-  }
+  
   async function exportSaveFile() {
     try {
       let memoryState = { dna: dnaAmount, reb: rebirthCount, asc: ascendCount, lvs: NODES.map(n => n.level || 0) };
@@ -192,10 +165,12 @@
       alert("发生致命错误：" + err.message);
     }
   }
+  
   function triggerImport() {
     document.getElementById('backupFileInput').value = "";
     document.getElementById('backupFileInput').click();
   }
+  
   async function handleFileImport(e) {
     let file = e.target.files[0];
     if (!file) return;
@@ -211,6 +186,7 @@
       alert("无法读取ZIP文件！错误：" + err.message);
     }
   }
+  
   function isUnlocked(node) {
     if (!node.req || node.req.length === 0) return true;
     return node.req.every(r => {
@@ -220,10 +196,12 @@
       return rn.level >= r.lv;
     });
   }
+  
   function getCost(node) {
     if (node.type === 'dna') return Math.floor(node.baseCost * Math.pow(node.costMult, node.level || 0));
     else return Math.floor(node.baseCost * (node.level + 1));
   }
+  
   function calcStats() {
     let baseCps = 2, dnaPctSum = 0, rebPctSum = 0, ascPctSum = 0, currPctSum = 0, depCpsBonus = 0;
     NODES.forEach(n => {
@@ -241,13 +219,15 @@
     });
     let currentAssets = Math.floor(dnaAmount * (currPctSum / 100));
     let baseTotal = baseCps + currentAssets + depCpsBonus;
-    let finalCps = baseTotal * (1 + dnaPctSum / 100) * (1 + rebPctSum / 100) * (1 + ascPctSum / 100) * animationFrameRate;
+    let finalCps = baseTotal * (1 + dnaPctSum / 100) * (1 + rebPctSum / 100) * (1 + ascPctSum / 100);
     return { finalCps, rebPctSum, ascPctSum };
   }
+  
   function loadTree(type) {
     currentTab = type;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('active');
+    
     map.innerHTML = '<svg id="lines"></svg>';
     const svgEl = document.getElementById('lines');
     const activeNodes = NODES.filter(n => n.type === type);
@@ -258,6 +238,7 @@
         if (p) { p.children.push(n); n.parents.push(p); }
       });
     });
+    
     let rootNodes = activeNodes.filter(n => n.parents.length === 0);
     function calcDepth(node) {
       if (node.depth !== undefined) return node.depth;
@@ -274,6 +255,7 @@
       return node.calcW;
     }
     rootNodes.forEach(r => calcWidth(r));
+    
     let currentRootX = 0;
     function assignPos(node, leftX) {
       let w = node.calcW; node.x = leftX + w / 2; node.y = node.depth * LEVEL_HEIGHT;
@@ -284,11 +266,13 @@
       }
     }
     rootNodes.forEach(r => { assignPos(r, currentRootX); currentRootX += r.calcW + 200; });
+    
     activeNodes.forEach(node => {
       let nodeElement = document.createElement('div');
       nodeElement.className = 'node ' + node.type;
       nodeElement.id = 'node-' + node.id;
       nodeElement.style.left = node.x + 'px'; nodeElement.style.top = node.y + 'px';
+      
       let descText = "";
       if (node.cps) descText = "特性: 增加基础产出";
       if (node.dnaPct) descText = "特性: 增加全局DNA%";
@@ -296,6 +280,7 @@
       if (node.ascPct) descText = "特性: 增加飞升币收益%";
       if (node.currPct) descText = "特性: 基于当前资产加成%";
       if (node.depPct) descText = "特性: 继承前置产出%";
+      
       nodeElement.innerHTML = `
         <div class="n-title">${node.name}</div>
         <div class="n-lvl" id="lvl-${node.id}">0/${node.maxLv}</div>
@@ -304,16 +289,18 @@
         <div class="n-cost" id="cost-${node.id}"></div>
         <div class="n-req" id="req-${node.id}"></div>
       `;
+      
       nodeElement.onclick = () => {
         if (isUnlocked(node) && node.level < node.maxLv) {
           let cost = getCost(node);
           let type = node.type;
-          if (type === 'dna' && (isPowerSaving || dnaAmount >= cost)) { if(!isPowerSaving) dnaAmount -= cost; node.level++; updateRender(); }
-          else if (type === 'reb' && (isRebInf || rebirthCount >= cost)) { if(!isRebInf) rebirthCount -= cost; node.level++; updateRender(); }
-          else if (type === 'asc' && (isAscInf || ascendCount >= cost)) { if(!isAscInf) ascendCount -= cost; node.level++; updateRender(); }
+          if (type === 'dna' && dnaAmount >= cost) { dnaAmount -= cost; node.level++; updateRender(); }
+          else if (type === 'reb' && rebirthCount >= cost) { rebirthCount -= cost; node.level++; updateRender(); }
+          else if (type === 'asc' && ascendCount >= cost) { ascendCount -= cost; node.level++; updateRender(); }
         }
       };
       map.appendChild(nodeElement);
+      
       if (node.parents) {
         node.parents.forEach(parent => {
           let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -325,42 +312,51 @@
         });
       }
     });
+    
     btnRebirth.style.display = type === 'dna' ? 'block' : 'none';
     btnAscend.style.display = type === 'reb' ? 'block' : 'none';
     centerView(); updateRender();
   }
+  
   function switchTab(type) { loadTree(type); }
+  
   function doRebirth() {
-    let req = 1000000 * Math.pow(50, rebirthCount);
-    if (dnaAmount >= req || isPowerSaving) {
+    let req = 1000000 * Math.pow(2, rebirthCount);
+    if (dnaAmount >= req) {
       if(!confirm("确定重塑肉身吗？DNA清零，获得1次重生。")) return;
       dnaAmount = 15; rebirthCount++; NODES.filter(n => n.type === 'dna').forEach(n => n.level = 0); loadTree(currentTab);
     }
   }
+  
   function doAscend() {
     let req = 5 + ascendCount * 5;
-    if (rebirthCount >= req || isRebInf) {
+    if (rebirthCount >= req) {
       if(!confirm("确定突破飞升吗？重生币清零，获得1次飞升。")) return;
       rebirthCount = 0; ascendCount++; NODES.filter(n => n.type === 'dna' || n.type === 'reb').forEach(n => n.level = 0); loadTree(currentTab);
     }
   }
+  
   function updateRender() {
     let stats = calcStats();
-    dnaLabel.innerText = isPowerSaving ? "∞" : Math.floor(dnaAmount);
-    cpsLabel.innerText = "每秒: " + (isPowerSaving ? "∞" : stats.finalCps.toFixed(1));
-    rebLabel.innerText = isRebInf ? "∞" : rebirthCount;
-    ascLabel.innerText = isAscInf ? "∞" : ascendCount;
-    let reqReb = 1000000 * Math.pow(50, rebirthCount);
+    dnaLabel.innerText = Math.floor(dnaAmount);
+    cpsLabel.innerText = "每秒: " + stats.finalCps.toFixed(1);
+    rebLabel.innerText = rebirthCount;
+    ascLabel.innerText = ascendCount;
+    
+    let reqReb = 1000000 * Math.pow(2, rebirthCount);
     btnRebirth.innerText = `重塑肉身 (需 ${reqReb >= 1e9 ? reqReb.toExponential(1) : reqReb} DNA)`;
-    btnRebirth.disabled = dnaAmount < reqReb && !isPowerSaving;
+    btnRebirth.disabled = dnaAmount < reqReb;
+    
     let reqAsc = 5 + ascendCount * 5;
     btnAscend.innerText = `突破飞升 (需 ${reqAsc} 次重生)`;
-    btnAscend.disabled = rebirthCount < reqAsc && !isRebInf;
+    btnAscend.disabled = rebirthCount < reqAsc;
+    
     NODES.forEach(node => {
       if(node.type !== currentTab) return;
       let div = document.getElementById('node-' + node.id);
       if (!div) return;
       document.getElementById('lvl-' + node.id).innerText = `${node.level || 0}/${node.maxLv}`;
+      
       let gainText = [];
       if(node.cps) gainText.push(`+${node.cps * node.level}/s`);
       if(node.dnaPct) gainText.push(`DNA +${node.dnaPct * node.level}%`);
@@ -369,21 +365,25 @@
       if(node.currPct) gainText.push(`当前 +${node.currPct * node.level}%`);
       if(node.depPct) gainText.push(`继承 +${node.depPct * node.level}%`);
       document.getElementById('gain-' + node.id).innerText = node.level > 0 ? gainText.join('\n') : '';
+      
       let cost = getCost(node);
-      let costText = node.type === 'dna' ? (isPowerSaving ? "∞" : cost) : (node.type === 'reb' ? (isRebInf ? "∞" : `需 ${cost} 重生`) : (isAscInf ? "∞" : `需 ${cost} 飞升`));
+      let costText = node.type === 'dna' ? cost : (node.type === 'reb' ? `需 ${cost} 重生` : `需 ${cost} 飞升`);
       document.getElementById('cost-' + node.id).innerText = node.level >= node.maxLv ? "MAX" : costText;
+      
       let unlocked = isUnlocked(node);
       document.getElementById('req-' + node.id).innerText = (node.req && !unlocked) ? "需前置满级" : "";
+      
       div.className = 'node ' + node.type;
       if (node.level >= node.maxLv) div.classList.add('max');
       else if (!unlocked) div.classList.add('lock');
       else {
         let can = false;
-        if (node.type === 'dna') can = isPowerSaving || dnaAmount >= cost;
-        else if (node.type === 'reb') can = isRebInf || rebirthCount >= cost;
-        else if (node.type === 'asc') can = isAscInf || ascendCount >= cost;
+        if (node.type === 'dna') can = dnaAmount >= cost;
+        else if (node.type === 'reb') can = rebirthCount >= cost;
+        else if (node.type === 'asc') can = ascendCount >= cost;
         if (can) div.classList.add('can');
       }
+      
       if (node.parents) node.parents.forEach(parent => {
         let path = document.getElementById(`line-${parent.id}-${node.id}`);
         if (path) {
@@ -393,20 +393,12 @@
       });
     });
   }
+  
   setInterval(() => { 
-    if(!isPowerSaving) dnaAmount += calcStats().finalCps; 
-    if (autoRenderReady) {
-      NODES.forEach(node => {
-        if (node.level < node.maxLv && isUnlocked(node)) {
-          let cost = getCost(node);
-          if (node.type === 'dna' && (isPowerSaving || dnaAmount >= cost)) { if(!isPowerSaving) dnaAmount -= cost; node.level++; }
-          else if (node.type === 'reb' && (isRebInf || rebirthCount >= cost)) { if(!isRebInf) rebirthCount -= cost; node.level++; }
-          else if (node.type === 'asc' && (isAscInf || ascendCount >= cost)) { if(!isAscInf) ascendCount -= cost; node.level++; }
-        }
-      });
-    }
+    dnaAmount += calcStats().finalCps; 
     updateRender();
   }, 1000);
+  
   loadTree('dna');
 </script>
 </body>
