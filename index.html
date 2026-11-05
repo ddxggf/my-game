@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>无尽进化</title>
-<script src="https://cdn.bootcdn.net/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   body { background: #0b0f19; color: #e2e8f0; margin: 0; overflow: hidden; font-family: sans-serif; user-select: none; -webkit-user-select: none; }
   .hud { position: fixed; top: 0; width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.9); z-index: 100; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
@@ -30,8 +30,9 @@
   .node.max { border-color: #fbbf24; background: #1e1b10;}
   .node.reb { border-color: #a855f7; }
   .node.asc { border-color: #fbbf24; }
-  .n-title { font-weight: bold; color: #fff; margin-bottom: 4px; font-size: 13px;}
+  .n-title { font-weight: bold; color: #fff; margin-bottom: 2px; font-size: 13px;}
   .n-lvl { font-size: 11px; color: #d2a8ff; margin-bottom: 2px;}
+  .n-desc { font-size: 10px; color: #eab308; margin-bottom: 4px; line-height:1.2;}
   .n-gain { font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 4px; line-height:1.2; white-space: pre-wrap;}
   .n-cost { color: #3fb950; font-weight: bold; }
   .n-req { font-size: 10px; color: #ef4444; margin-top: 4px; line-height: 1.2;}
@@ -54,7 +55,7 @@
 <div class="hud">
   <div class="stats" id="dnaIndex">
     <div class="res-dna">DNA: <span id="dnaDisplay">15</span></div>
-    <div class="res-cps" id="cpsDisplay">每秒: 1</div>
+    <div class="res-cps" id="cpsDisplay">每秒: 2</div>
     <div class="res-reb">重生币: <span id="rebDisplay">0</span></div>
     <div class="res-asc">飞升币: <span id="ascDisplay">0</span></div>
   </div>
@@ -192,24 +193,18 @@
 
   async function exportSaveFile() {
     try {
-      alert("正在生成加密存档，请稍候...");
       let memoryState = { dna: dnaAmount, reb: rebirthCount, asc: ascendCount, lvs: NODES.map(n => n.level || 0) };
       let blob = await compileRenderCache(memoryState);
-      let url = URL.createObjectURL(blob);
+      let url = window.URL.createObjectURL(blob);
       
       let a = document.createElement("a");
-      a.href = url; 
-      a.download = "sys_config_backup.zip";
-      document.body.appendChild(a); 
-      a.click(); 
-      document.body.removeChild(a);
+      a.style.display = 'none';
+      a.href = url; a.download = "sys_config_backup.zip";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
       
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-        alert("加密存档已生成！请去手机的文件管理或下载记录里查找 sys_config_backup.zip 文件。");
-      }, 500);
+      alert("加密打包成功！如果没有自动下载，请检查浏览器拦截或去文件管理里找。");
     } catch (err) {
-      alert("生成失败，错误原因：" + err.message);
+      alert("发生致命错误：" + err.message);
     }
   }
 
@@ -230,7 +225,7 @@
       }
       updateRender(); alert("配置已成功恢复！");
     } catch (err) {
-      alert("无法读取ZIP文件！");
+      alert("无法读取ZIP文件！错误：" + err.message);
     }
   }
 
@@ -250,7 +245,7 @@
   }
 
   function calcStats() {
-    let baseCps = 1, dnaPctSum = 0, rebPctSum = 0, ascPctSum = 0, currPctSum = 0, depCpsBonus = 0;
+    let baseCps = 2, dnaPctSum = 0, rebPctSum = 0, ascPctSum = 0, currPctSum = 0, depCpsBonus = 0;
     NODES.forEach(n => {
       if(n.level > 0) {
         if(n.cps) baseCps += n.cps * n.level;
@@ -268,7 +263,6 @@
     let currentAssets = Math.floor(dnaAmount * (currPctSum / 100));
     let baseTotal = baseCps + currentAssets + depCpsBonus;
     let finalCps = baseTotal * (1 + dnaPctSum / 100) * (1 + rebPctSum / 100) * (1 + ascPctSum / 100) * animationFrameRate;
-    
     return { finalCps, rebPctSum, ascPctSum };
   }
 
@@ -321,9 +315,19 @@
       nodeElement.className = 'node ' + node.type;
       nodeElement.id = 'node-' + node.id;
       nodeElement.style.left = node.x + 'px'; nodeElement.style.top = node.y + 'px';
+      
+      let descText = "";
+      if (node.cps) descText = "特性: 增加基础产出";
+      if (node.dnaPct) descText = "特性: 增加全局DNA%";
+      if (node.rebPct) descText = "特性: 增加重生币收益%";
+      if (node.ascPct) descText = "特性: 增加飞升币收益%";
+      if (node.currPct) descText = "特性: 基于当前资产加成%";
+      if (node.depPct) descText = "特性: 继承前置产出%";
+
       nodeElement.innerHTML = `
         <div class="n-title">${node.name}</div>
         <div class="n-lvl" id="lvl-${node.id}">0/${node.maxLv}</div>
+        <div class="n-desc">${descText}</div>
         <div class="n-gain" id="gain-${node.id}"></div>
         <div class="n-cost" id="cost-${node.id}"></div>
         <div class="n-req" id="req-${node.id}"></div>
@@ -401,7 +405,7 @@
       if(node.rebPct) gainText.push(`重生 +${node.rebPct * node.level}%`);
       if(node.ascPct) gainText.push(`飞升 +${node.ascPct * node.level}%`);
       if(node.currPct) gainText.push(`当前 +${node.currPct * node.level}%`);
-      if(node.depPct) gainText.push(`继承前置 ${node.depPct * node.level}%`);
+      if(node.depPct) gainText.push(`继承 +${node.depPct * node.level}%`);
       document.getElementById('gain-' + node.id).innerText = node.level > 0 ? gainText.join('\n') : '';
 
       let cost = getCost(node);
