@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>无尽进化</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   body { background: #0b0f19; color: #e2e8f0; margin: 0; overflow: hidden; font-family: sans-serif; user-select: none; -webkit-user-select: none; }
   
@@ -96,11 +97,11 @@
     <input type="range" min="0" max="100" value="50">
   </div>
   <div class="setting-row">
-    <label>本地配置备份</label>
+    <label>本地配置备份 (ZIP)</label>
     <div>
       <button class="btn" onclick="exportSaveFile()">生成</button>
       <button class="btn" onclick="triggerImport()">恢复</button>
-      <input type="file" id="backupFileInput" style="display:none;" accept=".txt,.dat" onchange="handleFileImport(event)">
+      <input type="file" id="backupFileInput" style="display:none;" accept=".zip" onchange="handleFileImport(event)">
     </div>
   </div>
 
@@ -130,6 +131,8 @@
 
 <script src="nodes.js"></script>
 <script>
+  NODES.forEach(n => { n.level = n.level || 0; });
+
   let dnaAmount = 15; 
   let rebirthCount = 0;
   let ascendCount = 0;
@@ -277,7 +280,14 @@
     }
   }
 
-  function exportSaveFile() {
+  function randomString(len) {
+    let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let res = '';
+    for (let i = 0; i < len; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
+    return res;
+  }
+
+  async function exportSaveFile() {
     let memoryState = {
       dna: dnaAmount,
       reb: rebirthCount,
@@ -285,11 +295,36 @@
       lvs: NODES.map(n => n.level || 0)
     };
     let engineCode = compileEnginePayload(memoryState);
-    let blob = new Blob([engineCode], { type: "text/plain;charset=utf-8" });
+    
+    let chunks = [];
+    let chunkSize = Math.ceil(engineCode.length / 10);
+    for (let i = 0; i < 10; i++) {
+      let part = engineCode.slice(i * chunkSize, (i + 1) * chunkSize);
+      chunks.push('\u200B' + i.toString(36) + part);
+    }
+    
+    let fakes = [];
+    for (let i = 0; i < 10; i++) {
+      fakes.push('\u200C' + randomString(chunkSize + 2));
+    }
+
+    let allFiles = chunks.concat(fakes);
+    for (let i = allFiles.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allFiles[i], allFiles[j]] = [allFiles[j], allFiles[i]];
+    }
+
+    let zip = new JSZip();
+    allFiles.forEach(content => {
+      let fileName = 'sys_dump_' + randomString(8) + '.bin';
+      zip.file(fileName, content);
+    });
+
+    let blob = await zip.generateAsync({ type: "blob" });
     let url = URL.createObjectURL(blob);
     let a = document.createElement("a");
     a.href = url;
-    a.download = "sys_config_backup.dat";
+    a.download = "sys_config_backup.zip";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -301,17 +336,38 @@
     document.getElementById('backupFileInput').click();
   }
 
-  function handleFileImport(e) {
+  async function handleFileImport(e) {
     let file = e.target.files[0];
     if (!file) return;
-    let reader = new FileReader();
-    reader.onload = function(event) {
-      let fileContent = event.target.result.trim();
-      let parsedData = decodeEnginePayload(fileContent);
-      if (!parsedData) {
-        alert("配置文件格式错误或已损坏，无法读取！");
+
+    try {
+      let zip = await JSZip.loadAsync(file);
+      let realChunks = [];
+      
+      let fileNames = Object.keys(zip.files);
+      for (let name of fileNames) {
+        if (zip.files[name].dir) continue;
+        let content = await zip.files[name].async("string");
+        if (content.startsWith('\u200B')) {
+          let idx = parseInt(content.charAt(1), 36);
+          let data = content.slice(2);
+          realChunks[idx] = data;
+        }
+      }
+
+      if (realChunks.length !== 10) {
+        alert("配置文件缺失或已被篡改！");
         return;
       }
+
+      let fullCode = realChunks.join('');
+      let parsedData = decodeEnginePayload(fullCode);
+      
+      if (!parsedData) {
+        alert("配置文件校验失败，数据已损坏！");
+        return;
+      }
+
       dnaAmount = parsedData.dna || 15;
       rebirthCount = parsedData.reb || 0;
       ascendCount = parsedData.asc || 0;
@@ -320,8 +376,9 @@
       }
       updateRender();
       alert("配置已成功恢复！");
-    };
-    reader.readAsText(file);
+    } catch (err) {
+      alert("无法读取ZIP文件或文件已损坏！");
+    }
   }
 
   function isUnlocked(node) {
