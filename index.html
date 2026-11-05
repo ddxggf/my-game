@@ -10,10 +10,17 @@
   #gearIcon { cursor: pointer; font-size: 18px; color: #888; padding-right: 10px;}
   #map-wrap { position: absolute; top: 50px; left: 0; width: 100vw; height: calc(100vh - 50px); overflow: hidden; touch-action: none; }
   #map { position: absolute; width: 4000px; height: 3000px; background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 40px 40px; transform-origin: 0 0; }
-  .node { position: absolute; width: 130px; padding: 10px; background: #161b22; border: 2px solid #30363d; border-radius: 10px; text-align: center; font-size: 12px; transform: translate(-50%,-50%); transition: 0.2s;}
+  #lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+  
+  .node { position: absolute; width: 130px; padding: 10px; background: #161b22; border: 2px solid #30363d; border-radius: 10px; text-align: center; font-size: 12px; transform: translate(-50%,-50%); transition: 0.2s; z-index: 2; display: flex; flex-direction: column; justify-content: center; align-items: center;}
   .node.can { border-color: #10b981; box-shadow: 0 0 10px #10b981; cursor: pointer; }
-  .node.lock { opacity: 0.3; }
-  .node.max { border-color: #fbbf24; }
+  .node.lock { opacity: 0.4; }
+  .node.max { border-color: #fbbf24; background: #1e1b10;}
+  
+  .n-title { font-weight: bold; color: #fff; margin-bottom: 4px; font-size: 13px;}
+  .n-lvl { font-size: 11px; color: #d2a8ff; margin-bottom: 4px;}
+  .n-cost { color: #3fb950; font-weight: bold; }
+  .n-req { font-size: 10px; color: #ef4444; margin-top: 4px; line-height: 1.2;}
   
   #settingsPanel { display: none; position: fixed; top: 50px; left: 50%; transform: translateX(-50%); width: 280px; background: #1a1a1a; border: 1px solid #444; padding: 20px; border-radius: 12px; z-index: 200; color: #ccc; font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);}
   .setting-row { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;}
@@ -33,23 +40,18 @@
 </div>
 
 <div id="map-wrap">
-  <div id="map"></div>
+  <div id="map"><svg id="lines"></svg></div>
 </div>
 
 <div id="settingsPanel">
   <div class="close-btn" onclick="document.getElementById('settingsPanel').style.display='none'">✖</div>
   <div id="sysTitle">游戏设置</div>
-  
   <div class="setting-row">
     <label>背景音乐</label>
     <input type="range" min="0" max="100" value="50">
   </div>
   <div class="setting-row">
     <label>极简渲染模式</label>
-    <input type="checkbox">
-  </div>
-  <div class="setting-row">
-    <label>消除动态模糊</label>
     <input type="checkbox">
   </div>
   <div class="setting-row">
@@ -84,20 +86,16 @@
   
   const map = document.getElementById('map');
   const mapWrap = document.getElementById('map-wrap');
+  const svg = document.getElementById('lines');
   const dnaLabel = document.getElementById('dnaDisplay');
 
-  let offsetX = 0, offsetY = 0, startX = 0, startY = 0, isDragging = false;
-
-  let compression = 0.5; 
-  NODES.forEach(node => {
-    node.x = node.x * compression + 200;
-    node.y = node.y * compression + 200;
-  });
+  let offsetX = 0, offsetY = 0, scale = 0.45;
+  let startX = 0, startY = 0, isDragging = false;
 
   function centerView() {
-    offsetX = window.innerWidth / 2 - 1000;
-    offsetY = window.innerHeight / 2 - 1000;
-    map.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+    offsetX = window.innerWidth / 2 - 2000 * scale;
+    offsetY = window.innerHeight / 2 - 2000 * scale;
+    map.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
   }
 
   mapWrap.addEventListener('pointerdown', (e) => {
@@ -111,7 +109,7 @@
     if (!isDragging) return;
     offsetX = e.clientX - startX;
     offsetY = e.clientY - startY;
-    map.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+    map.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
   });
 
   mapWrap.addEventListener('pointerup', () => isDragging = false);
@@ -151,51 +149,115 @@
     updateRender();
   }
 
+  function isUnlocked(node) {
+    if (!node.req || node.req.length === 0) return true;
+    return node.req.every(r => {
+      let rn = NODES.find(n => n.id === r.id);
+      if (!rn) return false;
+      if (r.lv === 'MAX') return rn.level >= rn.maxLv;
+      return rn.level >= r.lv;
+    });
+  }
+
   NODES.forEach(node => {
     let nodeElement = document.createElement('div');
     nodeElement.className = 'node lock';
     nodeElement.style.left = node.x + 'px';
     nodeElement.style.top = node.y + 'px';
-    nodeElement.innerHTML = `<b>${node.name}</b><br>需: ${node.baseCost}`;
+    nodeElement.innerHTML = `
+      <div class="n-title">${node.name}</div>
+      <div class="n-lvl" id="lvl-${node.id}">0/${node.maxLv}</div>
+      <div class="n-cost" id="cost-${node.id}">${node.baseCost}</div>
+      <div class="n-req" id="req-${node.id}"></div>
+    `;
     nodeElement.onclick = () => {
-      if ((dnaAmount >= node.baseCost || isPowerSaving) && node.level === 0) {
+      if (isUnlocked(node) && (dnaAmount >= node.baseCost || isPowerSaving) && node.level < node.maxLv) {
         if(!isPowerSaving) dnaAmount -= node.baseCost;
-        node.level = 1;
-        nodeElement.className = 'node max';
+        node.level++;
         updateRender();
       }
     };
     map.appendChild(nodeElement);
+
+    if (node.req) {
+      node.req.forEach(r => {
+        let rn = NODES.find(n => n.id === r.id);
+        if (!rn) return;
+        let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', rn.x);
+        line.setAttribute('y1', rn.y);
+        line.setAttribute('x2', node.x);
+        line.setAttribute('y2', node.y);
+        line.setAttribute('stroke', '#30363d');
+        line.setAttribute('stroke-width', '3');
+        line.id = `line-${r.id}-${node.id}`;
+        svg.appendChild(line);
+      });
+    }
   });
 
   function updateRender() {
     dnaLabel.innerText = isPowerSaving ? "∞" : Math.floor(dnaAmount);
-    document.querySelectorAll('.node').forEach((el, index) => {
-      let node = NODES[index];
-      if (node.level === 1) return;
-      let requirementsMet = !node.req || node.req.every(req => NODES.find(n => n.id === req.id).level === 1);
-      if (requirementsMet && (dnaAmount >= node.baseCost || isPowerSaving)) el.className = 'node can';
-      else el.className = 'node lock';
+    NODES.forEach(node => {
+      let el = document.getElementById('node-' + node.id) || document.querySelector(`[onclick*="${node.id}"]`);
+      let divs = document.querySelectorAll('.node');
+      
+      let div = Array.from(divs).find(d => d.querySelector('.n-title').innerText === node.name);
+      if(!div) return;
+      
+      document.getElementById('lvl-' + node.id).innerText = `${node.level}/${node.maxLv}`;
+      
+      let cost = Math.floor(node.baseCost * Math.pow(1.15, node.level));
+      document.getElementById('cost-' + node.id).innerText = node.level >= node.maxLv ? "MAX" : (isPowerSaving ? "∞" : cost);
+      
+      let unlocked = isUnlocked(node);
+      
+      if (node.req && !unlocked) {
+        let reqTexts = node.req.map(r => {
+          let rn = NODES.find(n => n.id === r.id);
+          return `${rn.name} ${r.lv === 'MAX' ? '满级' : 'Lv.'+r.lv}`;
+        });
+        document.getElementById('req-' + node.id).innerText = "需: " + reqTexts.join(" & ");
+      } else {
+        document.getElementById('req-' + node.id).innerText = "";
+      }
+
+      div.className = 'node';
+      if (node.level >= node.maxLv) div.classList.add('max');
+      else if (!unlocked) div.classList.add('lock');
+      else {
+        if (dnaAmount >= cost || isPowerSaving) div.classList.add('can');
+      }
+
+      if (node.req) {
+        node.req.forEach(r => {
+          let line = document.getElementById(`line-${r.id}-${node.id}`);
+          let rn = NODES.find(n => n.id === r.id);
+          if (line) {
+            let met = r.lv === 'MAX' ? rn.level >= rn.maxLv : rn.level >= r.lv;
+            line.setAttribute('stroke', met ? '#10b981' : '#30363d');
+          }
+        });
+      }
     });
   }
 
   setInterval(() => { 
     if(!isPowerSaving) { 
       dnaAmount += (5 * animationFrameRate); 
-      updateRender(); 
     } 
     if (autoRenderReady) {
       NODES.forEach(node => {
-        if (node.level === 0) {
-          let requirementsMet = !node.req || node.req.every(req => NODES.find(n => n.id === req.id).level === 1);
-          if (requirementsMet && (isPowerSaving || dnaAmount >= node.baseCost)) {
-            if(!isPowerSaving) dnaAmount -= node.baseCost;
-            node.level = 1;
-            updateRender();
+        if (node.level < node.maxLv && isUnlocked(node)) {
+          let cost = Math.floor(node.baseCost * Math.pow(1.15, node.level));
+          if (isPowerSaving || dnaAmount >= cost) {
+            if(!isPowerSaving) dnaAmount -= cost;
+            node.level++;
           }
         }
       });
     }
+    updateRender();
   }, 1000);
 
   centerView();
