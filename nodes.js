@@ -1,6 +1,6 @@
 const NODES = [];
 
-for(let i=1; i<=5; i++) { NODES.push({ id: 'dna_c_'+i, name: '细胞质 '+i, type: 'dna', baseCost: Math.pow(10, i+1), costMult: 1.5, maxLv: 15, cps: Math.pow(2, i), req: i>1?[{id:'dna_c_'+(i-1), lv: 5}]:[] }); }
+for(let i=1; i<=5; i++) { NODES.push({ id: 'dna_c_'+i, name: '细胞质 '+i, type: 'dna', baseCost: 15 * Math.pow(5, i-1), costMult: 1.5, maxLv: 15, cps: Math.pow(10, i), req: i>1?[{id:'dna_c_'+(i-1), lv: 5}]:[] }); }
 for(let i=1; i<=5; i++) { NODES.push({ id: 'dna_g_'+i, name: '基因锁 '+i, type: 'dna', baseCost: Math.pow(10, i*2+2), costMult: 1.8, maxLv: 10, mult: 1.5, req: [{id:'dna_c_'+i, lv: 10}] }); }
 for(let i=1; i<=5; i++) { NODES.push({ id: 'dna_s_'+i, name: '生命奇点 '+i, type: 'dna', baseCost: Math.pow(10, i*3+3), costMult: 2.0, maxLv: 5, mult: 2, req: [{id:'dna_g_'+i, lv: 'MAX'}] }); }
 for(let i=1; i<=5; i++) { NODES.push({ id: 'dna_o_'+i, name: '超脱 '+i, type: 'dna', baseCost: Math.pow(10, i*5+5), costMult: 3.0, maxLv: 3, cps: Math.pow(10, i*2), req: [{id:'dna_s_'+i, lv: 'MAX'}] }); }
