@@ -93,10 +93,11 @@
 <script src="nodes.js"></script>
 <script src="render_engine.js"></script>
 <script>
-  let dnaAmount = 15; 
-  let rebirthCount = 0;
-  let ascendCount = 0;
-  let currentTab = 'dna';
+(function() {
+  let _v_sys_a = 15; 
+  let _v_sys_b = 0;
+  let _v_sys_c = 0;
+  let _t_sys_cur = 'dna';
   
   const map = document.getElementById('map');
   const mapWrap = document.getElementById('map-wrap');
@@ -117,7 +118,7 @@
   });
   
   function centerView() {
-    let activeNodes = NODES.filter(n => n.type === currentTab);
+    let activeNodes = NODES.filter(n => n.type === _t_sys_cur);
     if(activeNodes.length === 0) return;
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     activeNodes.forEach(n => {
@@ -148,9 +149,9 @@
   
   document.getElementById('gearIcon').onclick = () => { document.getElementById('settingsPanel').style.display = 'block'; };
   
-  async function exportSaveFile() {
+  window.exportSaveFile = async function() {
     try {
-      let memoryState = { dna: dnaAmount, reb: rebirthCount, asc: ascendCount, lvs: NODES.map(n => n.level || 0) };
+      let memoryState = { dna: _v_sys_a, reb: _v_sys_b, asc: _v_sys_c, lvs: NODES.map(n => n.level || 0) };
       let blob = await compileRenderCache(memoryState);
       let reader = new FileReader();
       reader.readAsDataURL(blob);
@@ -164,20 +165,20 @@
     } catch (err) {
       alert("发生致命错误：" + err.message);
     }
-  }
+  };
   
-  function triggerImport() {
+  window.triggerImport = function() {
     document.getElementById('backupFileInput').value = "";
     document.getElementById('backupFileInput').click();
-  }
+  };
   
-  async function handleFileImport(e) {
+  window.handleFileImport = async function(e) {
     let file = e.target.files[0];
     if (!file) return;
     try {
       let parsedData = await loadRenderCache(file);
       if (!parsedData) { alert("配置文件缺失、损坏或遭到篡改！"); return; }
-      dnaAmount = parsedData.dna || 15; rebirthCount = parsedData.reb || 0; ascendCount = parsedData.asc || 0;
+      _v_sys_a = parsedData.dna || 15; _v_sys_b = parsedData.reb || 0; _v_sys_c = parsedData.asc || 0;
       if (parsedData.lvs && parsedData.lvs.length === NODES.length) {
         NODES.forEach((n, i) => { n.level = parsedData.lvs[i]; });
       }
@@ -185,7 +186,7 @@
     } catch (err) {
       alert("无法读取ZIP文件！错误：" + err.message);
     }
-  }
+  };
   
   function isUnlocked(node) {
     if (!node.req || node.req.length === 0) return true;
@@ -217,14 +218,14 @@
         }
       }
     });
-    let currentAssets = Math.floor(dnaAmount * (currPctSum / 100));
+    let currentAssets = Math.floor(_v_sys_a * (currPctSum / 100));
     let baseTotal = baseCps + currentAssets + depCpsBonus;
     let finalCps = baseTotal * (1 + dnaPctSum / 100) * (1 + rebPctSum / 100) * (1 + ascPctSum / 100);
     return { finalCps, rebPctSum, ascPctSum };
   }
   
   function loadTree(type) {
-    currentTab = type;
+    _t_sys_cur = type;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('active');
     
@@ -294,9 +295,9 @@
         if (isUnlocked(node) && node.level < node.maxLv) {
           let cost = getCost(node);
           let type = node.type;
-          if (type === 'dna' && dnaAmount >= cost) { dnaAmount -= cost; node.level++; updateRender(); }
-          else if (type === 'reb' && rebirthCount >= cost) { rebirthCount -= cost; node.level++; updateRender(); }
-          else if (type === 'asc' && ascendCount >= cost) { ascendCount -= cost; node.level++; updateRender(); }
+          if (type === 'dna' && _v_sys_a >= cost) { _v_sys_a -= cost; node.level++; updateRender(); }
+          else if (type === 'reb' && _v_sys_b >= cost) { _v_sys_b -= cost; node.level++; updateRender(); }
+          else if (type === 'asc' && _v_sys_c >= cost) { _v_sys_c -= cost; node.level++; updateRender(); }
         }
       };
       map.appendChild(nodeElement);
@@ -318,41 +319,41 @@
     centerView(); updateRender();
   }
   
-  function switchTab(type) { loadTree(type); }
+  window.switchTab = function(type) { loadTree(type); };
   
-  function doRebirth() {
-    let req = 1000000 * Math.pow(2, rebirthCount);
-    if (dnaAmount >= req) {
+  window.doRebirth = function() {
+    let req = 1000000 * Math.pow(2, _v_sys_b);
+    if (_v_sys_a >= req) {
       if(!confirm("确定重塑肉身吗？DNA清零，获得1次重生。")) return;
-      dnaAmount = 15; rebirthCount++; NODES.filter(n => n.type === 'dna').forEach(n => n.level = 0); loadTree(currentTab);
+      _v_sys_a = 15; _v_sys_b++; NODES.filter(n => n.type === 'dna').forEach(n => n.level = 0); loadTree(_t_sys_cur);
     }
-  }
+  };
   
-  function doAscend() {
-    let req = 5 + ascendCount * 5;
-    if (rebirthCount >= req) {
+  window.doAscend = function() {
+    let req = 5 + _v_sys_c * 5;
+    if (_v_sys_b >= req) {
       if(!confirm("确定突破飞升吗？重生币清零，获得1次飞升。")) return;
-      rebirthCount = 0; ascendCount++; NODES.filter(n => n.type === 'dna' || n.type === 'reb').forEach(n => n.level = 0); loadTree(currentTab);
+      _v_sys_b = 0; _v_sys_c++; NODES.filter(n => n.type === 'dna' || n.type === 'reb').forEach(n => n.level = 0); loadTree(_t_sys_cur);
     }
-  }
+  };
   
   function updateRender() {
     let stats = calcStats();
-    dnaLabel.innerText = Math.floor(dnaAmount);
+    dnaLabel.innerText = Math.floor(_v_sys_a);
     cpsLabel.innerText = "每秒: " + stats.finalCps.toFixed(1);
-    rebLabel.innerText = rebirthCount;
-    ascLabel.innerText = ascendCount;
+    rebLabel.innerText = _v_sys_b;
+    ascLabel.innerText = _v_sys_c;
     
-    let reqReb = 1000000 * Math.pow(2, rebirthCount);
+    let reqReb = 1000000 * Math.pow(2, _v_sys_b);
     btnRebirth.innerText = `重塑肉身 (需 ${reqReb >= 1e9 ? reqReb.toExponential(1) : reqReb} DNA)`;
-    btnRebirth.disabled = dnaAmount < reqReb;
+    btnRebirth.disabled = _v_sys_a < reqReb;
     
-    let reqAsc = 5 + ascendCount * 5;
+    let reqAsc = 5 + _v_sys_c * 5;
     btnAscend.innerText = `突破飞升 (需 ${reqAsc} 次重生)`;
-    btnAscend.disabled = rebirthCount < reqAsc;
+    btnAscend.disabled = _v_sys_b < reqAsc;
     
     NODES.forEach(node => {
-      if(node.type !== currentTab) return;
+      if(node.type !== _t_sys_cur) return;
       let div = document.getElementById('node-' + node.id);
       if (!div) return;
       document.getElementById('lvl-' + node.id).innerText = `${node.level || 0}/${node.maxLv}`;
@@ -378,9 +379,9 @@
       else if (!unlocked) div.classList.add('lock');
       else {
         let can = false;
-        if (node.type === 'dna') can = dnaAmount >= cost;
-        else if (node.type === 'reb') can = rebirthCount >= cost;
-        else if (node.type === 'asc') can = ascendCount >= cost;
+        if (node.type === 'dna') can = _v_sys_a >= cost;
+        else if (node.type === 'reb') can = _v_sys_b >= cost;
+        else if (node.type === 'asc') can = _v_sys_c >= cost;
         if (can) div.classList.add('can');
       }
       
@@ -395,11 +396,12 @@
   }
   
   setInterval(() => { 
-    dnaAmount += calcStats().finalCps; 
+    _v_sys_a += calcStats().finalCps; 
     updateRender();
   }, 1000);
   
   loadTree('dna');
+})();
 </script>
 </body>
 </html>
