@@ -1,62 +1,147 @@
-// ================= 数据生成 (总计 75 个节点) =================
-const NODES = [];
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>无尽进化</title>
+<style>
+  body { background: #0b0f19; color: #e2e8f0; margin: 0; overflow: hidden; font-family: sans-serif; user-select: none; -webkit-user-select: none; }
+  .hud { position: fixed; top: 0; width: 100%; padding: 10px; background: rgba(0,0,0,0.8); z-index: 100; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+  #gearIcon { cursor: pointer; font-size: 18px; color: #888; padding-right: 10px;}
+  #map { position: absolute; width: 4000px; height: 3000px; background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 40px 40px; }
+  .node { position: absolute; width: 130px; padding: 10px; background: #161b22; border: 2px solid #30363d; border-radius: 10px; text-align: center; font-size: 12px; transform: translate(-50%,-50%); transition: 0.2s;}
+  .node.can { border-color: #10b981; box-shadow: 0 0 10px #10b981; cursor: pointer; }
+  .node.lock { opacity: 0.3; }
+  .node.max { border-color: #fbbf24; }
+  #settingsPanel { display: none; position: fixed; top: 50px; left: 50%; transform: translateX(-50%); width: 280px; background: #1a1a1a; border: 1px solid #444; padding: 20px; border-radius: 12px; z-index: 200; color: #ccc; font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);}
+  .setting-row { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;}
+  .setting-row input[type="range"] { width: 100px; accent-color: #10b981; }
+  .close-btn { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 18px; color: #888;}
+  #sysTitle { font-weight: bold; margin-bottom: 20px; color: #fff; }
+  #advancedGraphics { display: none; margin-top: 15px; border-top: 1px dashed #333; padding-top: 15px; color: #888; font-size: 12px;}
+  .adv-input { background: #000; border: 1px solid #222; color: #10b981; padding: 2px 5px; width: 50px; border-radius: 4px; outline: none; }
+</style>
+</head>
+<body>
+<div class="hud">
+  <div id="hudData" style="padding: 5px;">DNA: <span id="dnaDisplay">15</span></div>
+  <div id="gearIcon">⚙️</div>
+</div>
+<div id="map"></div>
+
+<div id="settingsPanel">
+  <div class="close-btn" onclick="document.getElementById('settingsPanel').style.display='none'">✖</div>
+  <div id="sysTitle">游戏设置</div>
+  <div class="setting-row">
+    <label>背景音乐</label>
+    <input type="range" min="0" max="100" value="50">
+  </div>
+  <div class="setting-row">
+    <label>音效音量</label>
+    <input type="range" min="0" max="100" value="80">
+  </div>
+  <div class="setting-row">
+    <label>震动反馈</label>
+    <input type="checkbox" checked>
+  </div>
+  <div id="advancedGraphics">
+    <div class="setting-row">
+      <label>关闭能耗保护限制</label>
+      <input type="checkbox" id="setPower" onchange="applyGraphics()">
+    </div>
+    <div class="setting-row">
+      <label>开启节点预渲染</label>
+      <input type="checkbox" id="setRender" onchange="applyGraphics()">
+    </div>
+    <div class="setting-row">
+      <label>渲染倍率 (Hz)</label>
+      <input type="number" id="setFps" class="adv-input" value="1" onchange="applyGraphics()">
+    </div>
+  </div>
+</div>
+
+<script src="nodes.js"></script>
+<script>
+  let dnaAmount = 15; 
+  let isPowerSaving = false; 
+  let autoRenderReady = false; 
+  let animationFrameRate = 1;
+  let _t = null;
   
-// --- 1. DNA 树 (35个) ---
-// A1支线：基础产出 (15个)
-for(let i=1; i<=15; i++) {
-  NODES.push({ id:'dna_a_'+i, name:'细胞质 '+i, desc:'+1e'+i+'/s', 
-    x: 1000 + i*70, y: 4000 - i*120, baseCost: 15 * Math.pow(3, i), costMult: 1.15, 
-    cps: Math.pow(10, i), maxLv: 15, type: 'dna', req: i>1 ? [{id:'dna_a_'+(i-1), lv:5}] : [] });
-}
-// A2支线：倍率强化 (10个)
-for(let i=1; i<=10; i++) {
-  NODES.push({ id:'dna_b_'+i, name:'基因锁 '+i, desc:'全局 x2.5', 
-    x: 1600 + i*70, y: 4000 - i*120, baseCost: 1000 * Math.pow(5, i), costMult: 1.8, 
-    mult: 2.5, maxLv: 10, type: 'dna', req: [{id:'dna_a_'+(i*1.5|0), lv:10}] });
-}
-// A3支线：终局奇点 (10个)
-for(let i=1; i<=10; i++) {
-  NODES.push({ id:'dna_c_'+i, name:'生命奇点 '+i, desc:'全局 x10', 
-    x: 2200 + i*70, y: 4000 - i*120, baseCost: 1e12 * Math.pow(100, i), costMult: 2.5, 
-    mult: 10, maxLv: 5, type: 'dna', req: [{id:'dna_b_'+i, lv:'MAX'}] });
-}
+  const mapContainer = document.getElementById('map');
+  const dnaLabel = document.getElementById('dnaDisplay');
 
-// --- 2. 重生树 (25个) ---
-// B1支线：灵魂积攒 (10个)
-for(let i=1; i<=10; i++) {
-  NODES.push({ id:'reb_a_'+i, name:'灵魂碎片 '+i, desc:'+重生产出', 
-    x: 3000 + i*80, y: 4000 - i*150, baseCost: 10 * Math.pow(2.5, i), costMult: 1.5, 
-    cps: Math.pow(100, i), maxLv: 15, type: 'rebirth', req: i>1 ? [{id:'reb_a_'+(i-1), lv:5}] : [] });
-}
-// B2支线：法则强化 (10个)
-for(let i=1; i<=10; i++) {
-  NODES.push({ id:'reb_b_'+i, name:'轮回法则 '+i, desc:'全局 x5', 
-    x: 3600 + i*80, y: 4000 - i*150, baseCost: 50 * Math.pow(4, i), costMult: 2.0, 
-    mult: 5, maxLv: 10, type: 'rebirth', req: [{id:'reb_a_'+i, lv:10}] });
-}
-// B3支线：永恒觉醒 (5个)
-for(let i=1; i<=5; i++) {
-  NODES.push({ id:'reb_c_'+i, name:'永恒觉醒 '+i, desc:'全局 x50', 
-    x: 4200 + i*100, y: 4000 - i*200, baseCost: 1000 * Math.pow(10, i), costMult: 3.0, 
-    mult: 50, maxLv: 5, type: 'rebirth', req: [{id:'reb_b_'+(i*2), lv:'MAX'}] });
-}
+  document.getElementById('gearIcon').onclick = () => {
+    document.getElementById('settingsPanel').style.display = 'block';
+  };
 
-// --- 3. 飞升树 (15个) ---
-// C1支线：宇宙基础 (5个)
-for(let i=1; i<=5; i++) {
-  NODES.push({ id:'asc_a_'+i, name:'宇宙基础 '+i, desc:'全局 x100', 
-    x: 5000 + i*100, y: 4000 - i*200, baseCost: 1 * Math.pow(1.8, i), costMult: 2.0, 
-    mult: 100, maxLv: 5, type: 'ascend', req: i>1 ? [{id:'asc_a_'+(i-1), lv:3}] : [] });
-}
-// C2支线：维度跃迁 (5个)
-for(let i=1; i<=5; i++) {
-  NODES.push({ id:'asc_b_'+i, name:'维度跃迁 '+i, desc:'全局 x1000', 
-    x: 5600 + i*100, y: 4000 - i*200, baseCost: 5 * Math.pow(2.5, i), costMult: 2.5, 
-    mult: 1000, maxLv: 5, type: 'ascend', req: [{id:'asc_a_'+i, lv:'MAX'}] });
-}
-// C3支线：终极奇点 (5个)
-for(let i=1; i<=5; i++) {
-  NODES.push({ id:'asc_c_'+i, name:'终极奇点 '+i, desc:'全属性质变', 
-    x: 6200 + i*100, y: 4000 - i*200, baseCost: 50 * Math.pow(5, i), costMult: 3.0, 
-    mult: 10000, maxLv: 3, type: 'ascend', req: [{id:'asc_b_'+i, lv:3}] });
-}
+  document.getElementById('hudData').addEventListener('pointerdown', () => {
+    _t = setTimeout(() => {
+      let _v = prompt("请输入底层调试参数:");
+      if (_v === '15201314') {
+        document.getElementById('advancedGraphics').style.display = 'block';
+      } else if (_v) {
+        alert("参数校验失败。");
+      }
+    }, 1500);
+  });
+
+  document.getElementById('hudData').addEventListener('pointerup', () => clearTimeout(_t));
+  document.getElementById('hudData').addEventListener('pointerleave', () => clearTimeout(_t));
+
+  function applyGraphics() {
+    isPowerSaving = document.getElementById('setPower').checked;
+    autoRenderReady = document.getElementById('setRender').checked;
+    animationFrameRate = parseInt(document.getElementById('setFps').value) || 1;
+    updateRender();
+  }
+
+  NODES.forEach(node => {
+    let nodeElement = document.createElement('div');
+    nodeElement.className = 'node lock';
+    nodeElement.style.left = node.x + 'px';
+    nodeElement.style.top = node.y + 'px';
+    nodeElement.innerHTML = `<b>${node.name}</b><br>需: ${node.baseCost}`;
+    nodeElement.onclick = () => {
+      if ((dnaAmount >= node.baseCost || isPowerSaving) && node.level === 0) {
+        if(!isPowerSaving) dnaAmount -= node.baseCost;
+        node.level = 1;
+        nodeElement.className = 'node max';
+        updateRender();
+      }
+    };
+    mapContainer.appendChild(nodeElement);
+  });
+
+  function updateRender() {
+    dnaLabel.innerText = isPowerSaving ? "∞" : Math.floor(dnaAmount);
+    document.querySelectorAll('.node').forEach((el, index) => {
+      let node = NODES[index];
+      if (node.level === 1) return;
+      let requirementsMet = !node.req || node.req.every(req => NODES.find(n => n.id === req.id).level === 1);
+      if (requirementsMet && (dnaAmount >= node.baseCost || isPowerSaving)) el.className = 'node can';
+      else el.className = 'node lock';
+    });
+  }
+
+  setInterval(() => { 
+    if(!isPowerSaving) { 
+      dnaAmount += (5 * animationFrameRate); 
+      updateRender(); 
+    } 
+    if (autoRenderReady) {
+      NODES.forEach(node => {
+        if (node.level === 0) {
+          let requirementsMet = !node.req || node.req.every(req => NODES.find(n => n.id === req.id).level === 1);
+          if (requirementsMet && (isPowerSaving || dnaAmount >= node.baseCost)) {
+            if(!isPowerSaving) dnaAmount -= node.baseCost;
+            node.level = 1;
+            updateRender();
+          }
+        }
+      });
+    }
+  }, 1000);
+</script>
+</body>
+</html>
