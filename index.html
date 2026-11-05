@@ -11,27 +11,21 @@
   #map-wrap { position: absolute; top: 50px; left: 0; width: 100vw; height: calc(100vh - 50px); overflow: hidden; touch-action: none; }
   #map { position: absolute; width: 4000px; height: 4000px; background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 40px 40px; transform-origin: 0 0; }
   #lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
-  
   .node { position: absolute; width: 130px; padding: 10px; background: #161b22; border: 2px solid #30363d; border-radius: 10px; text-align: center; font-size: 12px; transform: translate(-50%,-50%); transition: 0.2s; z-index: 2; display: flex; flex-direction: column; justify-content: center; align-items: center;}
   .node.can { border-color: #10b981; box-shadow: 0 0 10px #10b981; cursor: pointer; }
   .node.lock { opacity: 0.4; }
   .node.max { border-color: #fbbf24; background: #1e1b10;}
-  
   .n-title { font-weight: bold; color: #fff; margin-bottom: 4px; font-size: 13px;}
   .n-lvl { font-size: 11px; color: #d2a8ff; margin-bottom: 4px;}
   .n-cost { color: #3fb950; font-weight: bold; }
   .n-req { font-size: 10px; color: #ef4444; margin-top: 4px; line-height: 1.2;}
-  
   #settingsPanel { display: none; position: fixed; top: 50px; left: 50%; transform: translateX(-50%); width: 280px; background: #1a1a1a; border: 1px solid #444; padding: 20px; border-radius: 12px; z-index: 200; color: #ccc; font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);}
   .setting-row { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;}
   .setting-row input[type="range"] { width: 100px; accent-color: #10b981; }
   .close-btn { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 18px; color: #888;}
-  
   #sysTitle { font-weight: bold; margin-bottom: 20px; color: #fff; display: inline-block; cursor: default;}
-  
   .btn { background: #333; color: #fff; border: 1px solid #555; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
   .btn:active { background: #555; }
-  
   #advancedGraphics { display: none; margin-top: 15px; border-top: 1px dashed #333; padding-top: 15px; color: #888; font-size: 12px;}
   .adv-input { background: #000; border: 1px solid #222; color: #10b981; padding: 2px 5px; width: 50px; border-radius: 4px; outline: none; }
 </style>
@@ -224,63 +218,65 @@
     updateRender();
   }
 
-  function getCheckSum(str) {
-    let sum = 0;
-    for (let i = 0; i < str.length; i++) {
-      sum += str.charCodeAt(i);
+  function calculateRenderCollision(dataStr) {
+    let accumulator = 0;
+    for (let i = 0; i < dataStr.length; i++) {
+      accumulator += dataStr.charCodeAt(i) * (i % 3 + 1);
     }
-    return sum;
+    return (accumulator % 999999).toString(36).toUpperCase();
   }
 
-  function encryptData(obj) {
-    let str = JSON.stringify(obj);
-    let result = "";
-    for (let i = 0; i < str.length; i++) {
-      result += String.fromCharCode(str.charCodeAt(i) ^ 42);
+  function compileEnginePayload(payloadObj) {
+    let rawStr = JSON.stringify(payloadObj);
+    let obfuscated = "";
+    let coreKey = 0x2A; 
+    for (let i = 0; i < rawStr.length; i++) {
+      obfuscated += String.fromCharCode(rawStr.charCodeAt(i) ^ coreKey);
     }
-    let b64 = btoa(unescape(encodeURIComponent(result)));
-    return b64 + "." + getCheckSum(b64);
+    let encoded = btoa(unescape(encodeURIComponent(obfuscated)));
+    return encoded + "|" + calculateRenderCollision(encoded);
   }
 
-  function decryptData(str) {
-    let parts = str.split(".");
-    if (parts.length !== 2) return null;
-    let b64 = parts[0];
-    let checksum = parts[1];
-    if (getCheckSum(b64).toString() !== checksum) return null;
+  function decodeEnginePayload(encodedStr) {
+    let segments = encodedStr.split("|");
+    if (segments.length !== 2) return null;
+    let encoded = segments[0];
+    let verificationTag = segments[1];
+    if (calculateRenderCollision(encoded) !== verificationTag) return null;
     
     try {
-      let decoded = decodeURIComponent(escape(atob(b64)));
-      let result = "";
-      for (let i = 0; i < decoded.length; i++) {
-        result += String.fromCharCode(decoded.charCodeAt(i) ^ 42);
+      let obfuscated = decodeURIComponent(escape(atob(encoded)));
+      let rawStr = "";
+      let coreKey = 0x2A;
+      for (let i = 0; i < obfuscated.length; i++) {
+        rawStr += String.fromCharCode(obfuscated.charCodeAt(i) ^ coreKey);
       }
-      return JSON.parse(result);
+      return JSON.parse(rawStr);
     } catch(e) {
       return null;
     }
   }
 
   function exportSave() {
-    let saveData = {
+    let memoryState = {
       dna: dnaAmount,
       lvs: NODES.map(n => n.level)
     };
-    let code = encryptData(saveData);
-    prompt("复制你的专属安全存档码（请勿修改）：", code);
+    let engineCode = compileEnginePayload(memoryState);
+    prompt("复制你的专属安全存档码（请勿修改）：", engineCode);
   }
 
   function importSave() {
-    let code = prompt("请粘贴你的安全存档码：");
-    if (!code) return;
-    let data = decryptData(code.trim());
-    if (!data) {
+    let inputCode = prompt("请粘贴你的安全存档码：");
+    if (!inputCode) return;
+    let parsedData = decodeEnginePayload(inputCode.trim());
+    if (!parsedData) {
       alert("存档格式错误或已被篡改！");
       return;
     }
-    dnaAmount = data.dna;
-    if (data.lvs && data.lvs.length === NODES.length) {
-      NODES.forEach((n, i) => { n.level = data.lvs[i]; });
+    dnaAmount = parsedData.dna;
+    if (parsedData.lvs && parsedData.lvs.length === NODES.length) {
+      NODES.forEach((n, i) => { n.level = parsedData.lvs[i]; });
     }
     updateRender();
   }
