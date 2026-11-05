@@ -9,16 +9,19 @@
   .hud { position: fixed; top: 0; width: 100%; padding: 10px; background: rgba(0,0,0,0.8); z-index: 100; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
   #gearIcon { cursor: pointer; font-size: 18px; color: #888; padding-right: 10px;}
   #map-wrap { position: absolute; top: 50px; left: 0; width: 100vw; height: calc(100vh - 50px); overflow: hidden; touch-action: none; }
-  #map { position: absolute; width: 4000px; height: 4000px; background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 40px 40px; transform-origin: 0 0; }
+  #map { position: absolute; width: 10000px; height: 10000px; background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 40px 40px; transform-origin: 0 0; }
   #lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
-  .node { position: absolute; width: 130px; padding: 10px; background: #161b22; border: 2px solid #30363d; border-radius: 10px; text-align: center; font-size: 12px; transform: translate(-50%,-50%); transition: 0.2s; z-index: 2; display: flex; flex-direction: column; justify-content: center; align-items: center;}
+  
+  .node { position: absolute; width: 140px; padding: 10px; background: #161b22; border: 2px solid #30363d; border-radius: 10px; text-align: center; font-size: 12px; transform: translate(-50%,-50%); transition: 0.2s; z-index: 2; display: flex; flex-direction: column; justify-content: center; align-items: center;}
   .node.can { border-color: #10b981; box-shadow: 0 0 10px #10b981; cursor: pointer; }
   .node.lock { opacity: 0.4; }
   .node.max { border-color: #fbbf24; background: #1e1b10;}
+  
   .n-title { font-weight: bold; color: #fff; margin-bottom: 4px; font-size: 13px;}
   .n-lvl { font-size: 11px; color: #d2a8ff; margin-bottom: 4px;}
   .n-cost { color: #3fb950; font-weight: bold; }
   .n-req { font-size: 10px; color: #ef4444; margin-top: 4px; line-height: 1.2;}
+  
   #settingsPanel { display: none; position: fixed; top: 50px; left: 50%; transform: translateX(-50%); width: 280px; background: #1a1a1a; border: 1px solid #444; padding: 20px; border-radius: 12px; z-index: 200; color: #ccc; font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);}
   .setting-row { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;}
   .setting-row input[type="range"] { width: 100px; accent-color: #10b981; }
@@ -93,57 +96,74 @@
   NODES.forEach(n => { 
     n.level = 0; 
     n.children = [];
+    n.parents = [];
   });
 
   NODES.forEach(n => {
     if (n.req) {
       n.req.forEach(r => {
         let parent = NODES.find(p => p.id === r.id);
-        if (parent) parent.children.push(n);
+        if (parent) {
+          parent.children.push(n);
+          n.parents.push(parent);
+        }
       });
     }
   });
 
-  let rootNodes = NODES.filter(n => !n.req || n.req.length === 0);
-  let queue = rootNodes.map(n => ({ node: n, depth: 0 }));
-  let visited = new Set();
+  let rootNodes = NODES.filter(n => n.parents.length === 0);
+  
+  function calcDepth(node) {
+    if (node.depth !== undefined) return node.depth;
+    if (node.parents.length === 0) {
+      node.depth = 0;
+    } else {
+      let maxP = 0;
+      node.parents.forEach(p => { maxP = Math.max(maxP, calcDepth(p) + 1); });
+      node.depth = maxP;
+    }
+    return node.depth;
+  }
+  NODES.forEach(n => calcDepth(n));
 
-  while (queue.length > 0) {
-    let { node, depth } = queue.shift();
-    if (visited.has(node.id)) continue;
-    visited.add(node.id);
-    node.depth = depth;
-    
-    node.children.forEach(child => {
-      if (!visited.has(child.id)) {
-        queue.push({ node: child, depth: depth + 1 });
-      }
-    });
+  const NODE_WIDTH = 180; 
+  const LEVEL_HEIGHT = 220;
+
+  function calcWidth(node) {
+    if (node.calcW !== undefined) return node.calcW;
+    if (node.children.length === 0) {
+      node.calcW = NODE_WIDTH;
+    } else {
+      let sum = 0;
+      node.children.forEach(c => { sum += calcWidth(c); });
+      node.calcW = Math.max(NODE_WIDTH, sum);
+    }
+    return node.calcW;
+  }
+  rootNodes.forEach(r => calcWidth(r));
+
+  let currentRootX = 0;
+  function assignPos(node, leftX) {
+    let w = node.calcW;
+    node.x = leftX + w / 2;
+    node.y = node.depth * LEVEL_HEIGHT;
+
+    if (node.children.length > 0) {
+      let childrenW = 0;
+      node.children.forEach(c => { childrenW += c.calcW; });
+      let childLeftX = node.x - childrenW / 2;
+      
+      node.children.forEach(c => {
+        assignPos(c, childLeftX);
+        childLeftX += c.calcW;
+      });
+    }
   }
 
-  NODES.forEach(n => { if (n.depth === undefined) n.depth = 0; });
-
-  let depthGroups = {};
-  NODES.forEach(n => {
-    if (!depthGroups[n.depth]) depthGroups[n.depth] = [];
-    depthGroups[n.depth].push(n);
+  rootNodes.forEach(r => {
+    assignPos(r, currentRootX);
+    currentRootX += r.calcW + 200; 
   });
-
-  let gapY = 200;
-  let gapX = 180;
-  let maxWidth = 0;
-
-  for (let d in depthGroups) {
-    let list = depthGroups[d];
-    let rowWidth = list.length * gapX;
-    if (rowWidth > maxWidth) maxWidth = rowWidth;
-    
-    let startX = -rowWidth / 2 + gapX / 2;
-    list.forEach((n, i) => {
-      n.x = startX + i * gapX;
-      n.y = d * gapY;
-    });
-  }
 
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   NODES.forEach(n => {
@@ -153,7 +173,7 @@
     if(n.y > maxY) maxY = n.y;
   });
 
-  let offsetX = 0, offsetY = 0, scale = 0.7;
+  let offsetX = 0, offsetY = 0, scale = 0.6;
   let startX = 0, startY = 0, isDragging = false;
 
   function centerView() {
@@ -316,19 +336,17 @@
     };
     map.appendChild(nodeElement);
 
-    if (node.req) {
-      node.req.forEach(r => {
-        let rn = NODES.find(n => n.id === r.id);
-        if (!rn) return;
-        let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', rn.x);
-        line.setAttribute('y1', rn.y);
-        line.setAttribute('x2', node.x);
-        line.setAttribute('y2', node.y);
-        line.setAttribute('stroke', '#30363d');
-        line.setAttribute('stroke-width', '3');
-        line.id = `line-${r.id}-${node.id}`;
-        svg.appendChild(line);
+    if (node.parents) {
+      node.parents.forEach(parent => {
+        let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        let midY = (parent.y + node.y) / 2;
+        let d = `M ${parent.x} ${parent.y} C ${parent.x} ${midY}, ${node.x} ${midY}, ${node.x} ${node.y}`;
+        path.setAttribute('d', d);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', '#30363d');
+        path.setAttribute('stroke-width', '3');
+        path.id = `line-${parent.id}-${node.id}`;
+        svg.appendChild(path);
       });
     }
   });
@@ -364,15 +382,16 @@
         if (isPowerSaving || dnaAmount >= cost) div.classList.add('can');
       }
 
-      if (node.req) {
-        node.req.forEach(r => {
-          let line = document.getElementById(`line-${r.id}-${node.id}`);
-          if (line) {
-            let rn = NODES.find(n => n.id === r.id);
-            if (rn) {
-              let met = r.lv === 'MAX' ? rn.level >= rn.maxLv : rn.level >= r.lv;
-              line.setAttribute('stroke', met ? '#10b981' : '#30363d');
+      if (node.parents) {
+        node.parents.forEach(parent => {
+          let path = document.getElementById(`line-${parent.id}-${node.id}`);
+          if (path) {
+            let met = true;
+            if (parent.req) { 
+                let r = node.req.find(req => req.id === parent.id);
+                met = r.lv === 'MAX' ? parent.level >= parent.maxLv : parent.level >= r.lv;
             }
+            path.setAttribute('stroke', met ? '#10b981' : '#30363d');
           }
         });
       }
