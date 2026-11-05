@@ -76,11 +76,18 @@
   const mapWrap = document.getElementById('map-wrap');
   const dnaLabel = document.getElementById('dnaDisplay');
 
-  let offsetX = 0, offsetY = 0, startX = 0, startY = 0, isDragging = false;
+  let offsetX = 0, offsetY = 0;
+  let startX = 0, startY = 0, isDragging = false;
+
+  let compression = 0.5; 
+  NODES.forEach(node => {
+    node.x = node.x * compression + 200;
+    node.y = node.y * compression + 200;
+  });
 
   function centerView() {
-    offsetX = window.innerWidth / 2 - 1500;
-    offsetY = window.innerHeight / 2 - 1800;
+    offsetX = window.innerWidth / 2 - 1000;
+    offsetY = window.innerHeight / 2 - 1000;
     map.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
   }
 
