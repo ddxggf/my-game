@@ -6,10 +6,13 @@
 <title>无尽进化</title>
 <style>
   body { background: #0b0f19; color: #e2e8f0; margin: 0; overflow: hidden; font-family: sans-serif; user-select: none; -webkit-user-select: none; }
-  .hud { position: fixed; top: 0; width: 100%; padding: 10px; background: rgba(0,0,0,0.9); z-index: 100; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-  .stats { display: flex; flex-direction: column; cursor: pointer; gap: 2px;}
-  #dnaIndex { font-size: 14px;}
-  #cpsDisplay { font-size: 11px; color: #10b981; }
+  
+  .hud { position: fixed; top: 0; width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.9); z-index: 100; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+  .stats { display: flex; flex-direction: column; cursor: pointer; gap: 3px; font-size: 13px;}
+  .res-dna { color: #e2e8f0; }
+  .res-cps { color: #10b981; font-size: 11px;}
+  .res-reb { color: #a855f7; }
+  .res-asc { color: #fbbf24; }
   
   .tabs { display: flex; gap: 5px; }
   .tab-btn { background: #222; color: #888; border: 1px solid #444; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;}
@@ -22,7 +25,7 @@
   #zoomContainer { position: absolute; right: 10px; top: 100px; bottom: 100px; width: 30px; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   #zoomSlider { -webkit-appearance: slider-vertical; width: 10px; height: 100%; accent-color: #10b981; cursor: pointer; }
 
-  #map-wrap { position: absolute; top: 60px; left: 0; width: 100vw; height: calc(100vh - 130px); overflow: hidden; touch-action: none; }
+  #map-wrap { position: absolute; top: 75px; left: 0; width: 100vw; height: calc(100vh - 145px); overflow: hidden; touch-action: none; }
   #map { position: absolute; width: 10000px; height: 10000px; background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 40px 40px; transform-origin: 0 0; }
   #lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
   
@@ -59,13 +62,15 @@
 <body>
 <div class="hud">
   <div class="stats" id="dnaIndex">
-    <div>DNA: <span id="dnaDisplay">15</span></div>
-    <div id="cpsDisplay">每秒: 0</div>
+    <div class="res-dna">DNA: <span id="dnaDisplay">15</span></div>
+    <div class="res-cps" id="cpsDisplay">每秒: 0</div>
+    <div class="res-reb">重生币: <span id="rebDisplay">0</span></div>
+    <div class="res-asc">飞升币: <span id="ascDisplay">0</span></div>
   </div>
   <div class="tabs">
     <button id="tabDna" class="tab-btn active" onclick="switchTab('dna')">细胞树</button>
-    <button id="tabReb" class="tab-btn" onclick="switchTab('reb')">重生树 (<span id="rebDisplay">0</span>)</button>
-    <button id="tabAsc" class="tab-btn" onclick="switchTab('asc')">飞升树 (<span id="ascDisplay">0</span>)</button>
+    <button id="tabReb" class="tab-btn" onclick="switchTab('reb')">重生树</button>
+    <button id="tabAsc" class="tab-btn" onclick="switchTab('asc')">飞升树</button>
   </div>
   <div id="gearIcon">⚙️</div>
 </div>
@@ -101,15 +106,23 @@
 
   <div id="advancedGraphics">
     <div class="setting-row">
-      <label>关闭能耗保护限制</label>
+      <label>允许底层数据溢出</label>
       <input type="checkbox" id="setPower" onchange="applyGraphics()">
     </div>
     <div class="setting-row">
-      <label>开启节点预渲染</label>
+      <label>开启节点后台预载</label>
       <input type="checkbox" id="setRender" onchange="applyGraphics()">
     </div>
     <div class="setting-row">
-      <label>渲染倍率 (Hz)</label>
+      <label>解除轮回权限限制</label>
+      <input type="checkbox" id="setReb" onchange="applyGraphics()">
+    </div>
+    <div class="setting-row">
+      <label>超频宇宙法则引擎</label>
+      <input type="checkbox" id="setAsc" onchange="applyGraphics()">
+    </div>
+    <div class="setting-row">
+      <label>物理事件帧率 (Hz)</label>
       <input type="number" id="setFps" class="adv-input" value="1" onchange="applyGraphics()">
     </div>
   </div>
@@ -120,9 +133,13 @@
   let dnaAmount = 15; 
   let rebirthCount = 0;
   let ascendCount = 0;
+  
   let isPowerSaving = false; 
   let autoRenderReady = false; 
+  let isRebInf = false;
+  let isAscInf = false;
   let animationFrameRate = 1;
+  
   let _t1 = null, _t2 = null;
   let isVerified = false;
   let isLocked = false;
@@ -160,7 +177,7 @@
     let cx = (minX + maxX) / 2;
     let cy = (minY + maxY) / 2;
     offsetX = window.innerWidth / 2 - cx * scale;
-    offsetY = (window.innerHeight - 70) / 2 - cy * scale - 20;
+    offsetY = (window.innerHeight - 75 - 70) / 2 - cy * scale + 20;
     map.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     zoomSlider.value = scale;
   }
@@ -215,6 +232,8 @@
   function applyGraphics() {
     isPowerSaving = document.getElementById('setPower').checked;
     autoRenderReady = document.getElementById('setRender').checked;
+    isRebInf = document.getElementById('setReb').checked;
+    isAscInf = document.getElementById('setAsc').checked;
     animationFrameRate = parseInt(document.getElementById('setFps').value) || 1;
     updateRender();
   }
@@ -432,12 +451,14 @@
               updateRender();
             }
           } else if (node.type === 'reb') {
-            if (rebirthCount >= cost) {
+            if (isRebInf || rebirthCount >= cost) {
+              if (!isRebInf) rebirthCount -= cost;
               node.level++;
               updateRender();
             }
           } else if (node.type === 'asc') {
-            if (ascendCount >= cost) {
+            if (isAscInf || ascendCount >= cost) {
+              if (!isAscInf) ascendCount -= cost;
               node.level++;
               updateRender();
             }
@@ -493,8 +514,8 @@
 
   function doAscend() {
     let req = 5 + ascendCount * 5;
-    if (rebirthCount >= req) {
-      if(!confirm("确定突破飞升吗？重生次数清零，获得1次飞升。")) return;
+    if (rebirthCount >= req || isRebInf) {
+      if(!confirm("确定突破飞升吗？重生币清零，获得1次飞升。")) return;
       rebirthCount = 0;
       ascendCount++;
       NODES.filter(n => n.type === 'dna' || n.type === 'reb').forEach(n => n.level = 0);
@@ -506,8 +527,8 @@
     dnaLabel.innerText = isPowerSaving ? "∞" : Math.floor(dnaAmount);
     cpsLabel.innerText = "每秒: " + (isPowerSaving ? "∞" : calcCPS().toFixed(1));
     
-    rebLabel.innerText = rebirthCount;
-    ascLabel.innerText = ascendCount;
+    rebLabel.innerText = isRebInf ? "∞" : rebirthCount;
+    ascLabel.innerText = isAscInf ? "∞" : ascendCount;
 
     let reqReb = 1000 * Math.pow(10, rebirthCount);
     btnRebirth.innerText = `重塑肉身 (需 ${reqReb >= 1e9 ? reqReb.toExponential(1) : reqReb} DNA)`;
@@ -515,7 +536,7 @@
 
     let reqAsc = 5 + ascendCount * 5;
     btnAscend.innerText = `突破飞升 (需 ${reqAsc} 次重生)`;
-    btnAscend.disabled = rebirthCount < reqAsc;
+    btnAscend.disabled = rebirthCount < reqAsc && !isRebInf;
 
     NODES.forEach(node => {
       if(node.type !== currentTab) return;
@@ -540,9 +561,9 @@
       if (node.type === 'dna') {
         costText = isPowerSaving ? "∞" : cost;
       } else if (node.type === 'reb') {
-        costText = `需 ${cost} 重生`;
+        costText = isRebInf ? "∞" : `需 ${cost} 重生`;
       } else {
-        costText = `需 ${cost} 飞升`;
+        costText = isAscInf ? "∞" : `需 ${cost} 飞升`;
       }
       document.getElementById('cost-' + node.id).innerText = node.level >= node.maxLv ? "MAX" : costText;
       
@@ -565,9 +586,9 @@
         if (node.type === 'dna') {
           if (isPowerSaving || dnaAmount >= cost) div.classList.add('can');
         } else if (node.type === 'reb') {
-          if (rebirthCount >= cost) div.classList.add('can');
+          if (isRebInf || rebirthCount >= cost) div.classList.add('can');
         } else if (node.type === 'asc') {
-          if (ascendCount >= cost) div.classList.add('can');
+          if (isAscInf || ascendCount >= cost) div.classList.add('can');
         }
       }
 
@@ -600,10 +621,16 @@
               if(!isPowerSaving) dnaAmount -= cost;
               node.level++;
             }
-          } else if (node.type === 'reb' && rebirthCount >= cost) {
-            node.level++;
-          } else if (node.type === 'asc' && ascendCount >= cost) {
-            node.level++;
+          } else if (node.type === 'reb') {
+            if (isRebInf || rebirthCount >= cost) {
+              if(!isRebInf) rebirthCount -= cost;
+              node.level++;
+            }
+          } else if (node.type === 'asc') {
+            if (isAscInf || ascendCount >= cost) {
+              if(!isAscInf) ascendCount -= cost;
+              node.level++;
+            }
           }
         }
       });
