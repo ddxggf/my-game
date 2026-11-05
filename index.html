@@ -108,7 +108,7 @@
   document.getElementById('dnaIndex').addEventListener('pointerdown', () => {
     _t = setTimeout(() => {
       let _v = prompt("请输入底层调试参数:");
-      if (_v === '15201314') {
+      if (_v === '5201314a') {
         document.getElementById('advancedGraphics').style.display = 'block';
       } else if (_v) {
         alert("参数校验失败。");
@@ -162,7 +162,7 @@
     if (autoRenderReady) {
       NODES.forEach(node => {
         if (node.level === 0) {
-          let requirementsMet = !node.req || node.req.every(req => node.id === req.id).level === 1;
+          let requirementsMet = !node.req || node.req.every(req => NODES.find(n => n.id === req.id).level === 1);
           if (requirementsMet && (isPowerSaving || dnaAmount >= node.baseCost)) {
             if(!isPowerSaving) dnaAmount -= node.baseCost;
             node.level = 1;
