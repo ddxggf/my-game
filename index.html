@@ -54,7 +54,7 @@
 <div class="hud">
   <div class="stats" id="dnaIndex">
     <div class="res-dna">DNA: <span id="dnaDisplay">15</span></div>
-    <div class="res-cps" id="cpsDisplay">每秒: 0</div>
+    <div class="res-cps" id="cpsDisplay">每秒: 1</div>
     <div class="res-reb">重生币: <span id="rebDisplay">0</span></div>
     <div class="res-asc">飞升币: <span id="ascDisplay">0</span></div>
   </div>
@@ -237,7 +237,7 @@
   }
 
   function calcStats() {
-    let baseCps = 0, dnaPctSum = 0, rebPctSum = 0, ascPctSum = 0, currPctSum = 0, depCpsBonus = 0;
+    let baseCps = 1, dnaPctSum = 0, rebPctSum = 0, ascPctSum = 0, currPctSum = 0, depCpsBonus = 0;
     NODES.forEach(n => {
       if(n.level > 0) {
         if(n.cps) baseCps += n.cps * n.level;
