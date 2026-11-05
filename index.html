@@ -502,7 +502,7 @@
   }
 
   function doRebirth() {
-    let req = 1000 * Math.pow(10, rebirthCount);
+    let req = 1000000 * Math.pow(50, rebirthCount);
     if (dnaAmount >= req || isPowerSaving) {
       if(!confirm("确定重塑肉身吗？DNA清零，获得1次重生。")) return;
       dnaAmount = 15;
@@ -530,7 +530,7 @@
     rebLabel.innerText = isRebInf ? "∞" : rebirthCount;
     ascLabel.innerText = isAscInf ? "∞" : ascendCount;
 
-    let reqReb = 1000 * Math.pow(10, rebirthCount);
+    let reqReb = 1000000 * Math.pow(50, rebirthCount);
     btnRebirth.innerText = `重塑肉身 (需 ${reqReb >= 1e9 ? reqReb.toExponential(1) : reqReb} DNA)`;
     btnRebirth.disabled = dnaAmount < reqReb && !isPowerSaving;
 
