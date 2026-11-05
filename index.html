@@ -7,49 +7,39 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   body { background: #0b0f19; color: #e2e8f0; margin: 0; overflow: hidden; font-family: sans-serif; user-select: none; -webkit-user-select: none; }
-  
   .hud { position: fixed; top: 0; width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.9); z-index: 100; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
   .stats { display: flex; flex-direction: column; cursor: pointer; gap: 3px; font-size: 13px;}
   .res-dna { color: #e2e8f0; }
   .res-cps { color: #10b981; font-size: 11px;}
   .res-reb { color: #a855f7; }
   .res-asc { color: #fbbf24; }
-  
   .tabs { display: flex; gap: 5px; }
   .tab-btn { background: #222; color: #888; border: 1px solid #444; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;}
   .tab-btn.active { background: #10b981; color: #fff; border-color: #10b981;}
   #tabReb.active { background: #a855f7; border-color: #a855f7; color: #fff;}
   #tabAsc.active { background: #fbbf24; border-color: #fbbf24; color: #000;}
-  
   #gearIcon { cursor: pointer; font-size: 18px; color: #888; padding-right: 10px;}
-  
   #zoomContainer { position: absolute; right: 10px; top: 100px; bottom: 100px; width: 30px; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   #zoomSlider { -webkit-appearance: slider-vertical; width: 10px; height: 100%; accent-color: #10b981; cursor: pointer; }
-
   #map-wrap { position: absolute; top: 75px; left: 0; width: 100vw; height: calc(100vh - 145px); overflow: hidden; touch-action: none; }
   #map { position: absolute; width: 10000px; height: 10000px; background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 40px 40px; transform-origin: 0 0; }
   #lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
-  
-  .node { position: absolute; width: 140px; padding: 10px; background: #161b22; border: 2px solid #30363d; border-radius: 10px; text-align: center; font-size: 12px; transform: translate(-50%,-50%); transition: 0.2s; z-index: 2; display: flex; flex-direction: column; justify-content: center; align-items: center;}
+  .node { position: absolute; width: 150px; padding: 10px; background: #161b22; border: 2px solid #30363d; border-radius: 10px; text-align: center; font-size: 12px; transform: translate(-50%,-50%); transition: 0.2s; z-index: 2; display: flex; flex-direction: column; justify-content: center; align-items: center;}
   .node.can { border-color: #10b981; box-shadow: 0 0 10px #10b981; cursor: pointer; }
   .node.lock { opacity: 0.4; }
   .node.max { border-color: #fbbf24; background: #1e1b10;}
-  
   .node.reb { border-color: #a855f7; }
   .node.asc { border-color: #fbbf24; }
-
   .n-title { font-weight: bold; color: #fff; margin-bottom: 4px; font-size: 13px;}
   .n-lvl { font-size: 11px; color: #d2a8ff; margin-bottom: 2px;}
-  .n-gain { font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 4px;}
+  .n-gain { font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 4px; line-height:1.2; white-space: pre-wrap;}
   .n-cost { color: #3fb950; font-weight: bold; }
   .n-req { font-size: 10px; color: #ef4444; margin-top: 4px; line-height: 1.2;}
-  
   #action-wrap { position: absolute; bottom: 0; width: 100%; height: 70px; background: rgba(0,0,0,0.9); z-index: 100; display: flex; justify-content: center; align-items: center; border-top: 1px solid #333;}
   .action-btn { padding: 10px 20px; border-radius: 20px; font-weight: bold; border: none; cursor: pointer; display: none; font-size: 14px;}
   #btnRebirth { background: #a855f7; color: #fff; box-shadow: 0 0 10px rgba(168,85,247,0.5);}
   #btnAscend { background: #fbbf24; color: #000; box-shadow: 0 0 10px rgba(251,191,36,0.5);}
   .action-btn:disabled { opacity: 0.4; box-shadow: none; cursor: not-allowed; }
-
   #settingsPanel { display: none; position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 280px; background: #1a1a1a; border: 1px solid #444; padding: 20px; border-radius: 12px; z-index: 200; color: #ccc; font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);}
   .setting-row { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;}
   .setting-row input[type="range"] { width: 100px; accent-color: #10b981; }
@@ -106,47 +96,22 @@
   </div>
 
   <div id="advancedGraphics">
-    <div class="setting-row">
-      <label>允许底层数据溢出</label>
-      <input type="checkbox" id="setPower" onchange="applyGraphics()">
-    </div>
-    <div class="setting-row">
-      <label>开启节点后台预载</label>
-      <input type="checkbox" id="setRender" onchange="applyGraphics()">
-    </div>
-    <div class="setting-row">
-      <label>解除轮回权限限制</label>
-      <input type="checkbox" id="setReb" onchange="applyGraphics()">
-    </div>
-    <div class="setting-row">
-      <label>超频宇宙法则引擎</label>
-      <input type="checkbox" id="setAsc" onchange="applyGraphics()">
-    </div>
-    <div class="setting-row">
-      <label>物理事件帧率 (Hz)</label>
-      <input type="number" id="setFps" class="adv-input" value="1" onchange="applyGraphics()">
-    </div>
+    <div class="setting-row"><label>允许底层数据溢出</label><input type="checkbox" id="setPower" onchange="applyGraphics()"></div>
+    <div class="setting-row"><label>开启节点后台预载</label><input type="checkbox" id="setRender" onchange="applyGraphics()"></div>
+    <div class="setting-row"><label>解除轮回权限限制</label><input type="checkbox" id="setReb" onchange="applyGraphics()"></div>
+    <div class="setting-row"><label>超频宇宙法则引擎</label><input type="checkbox" id="setAsc" onchange="applyGraphics()"></div>
+    <div class="setting-row"><label>物理事件帧率 (Hz)</label><input type="number" id="setFps" class="adv-input" value="1" onchange="applyGraphics()"></div>
   </div>
 </div>
 
 <script src="nodes.js"></script>
+<script src="render_engine.js"></script>
 <script>
-  NODES.forEach(n => { n.level = n.level || 0; });
-
   let dnaAmount = 15; 
   let rebirthCount = 0;
   let ascendCount = 0;
-  
-  let isPowerSaving = false; 
-  let autoRenderReady = false; 
-  let isRebInf = false;
-  let isAscInf = false;
-  let animationFrameRate = 1;
-  
-  let _t1 = null, _t2 = null;
-  let isVerified = false;
-  let isLocked = false;
-  let currentTab = 'dna';
+  let isPowerSaving = false, autoRenderReady = false, isRebInf = false, isAscInf = false, animationFrameRate = 1;
+  let _t1 = null, _t2 = null, isVerified = false, isLocked = false, currentTab = 'dna';
   
   const map = document.getElementById('map');
   const mapWrap = document.getElementById('map-wrap');
@@ -187,48 +152,32 @@
 
   mapWrap.addEventListener('pointerdown', (e) => {
     if(e.target.closest('.node')) return;
-    isDragging = true;
-    startX = e.clientX - offsetX;
-    startY = e.clientY - offsetY;
+    isDragging = true; startX = e.clientX - offsetX; startY = e.clientY - offsetY;
   });
-
   mapWrap.addEventListener('pointermove', (e) => {
     if (!isDragging) return;
-    offsetX = e.clientX - startX;
-    offsetY = e.clientY - startY;
+    offsetX = e.clientX - startX; offsetY = e.clientY - startY;
     map.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
   });
-
   mapWrap.addEventListener('pointerup', () => isDragging = false);
   mapWrap.addEventListener('pointerleave', () => isDragging = false);
 
-  document.getElementById('gearIcon').onclick = () => {
-    document.getElementById('settingsPanel').style.display = 'block';
-  };
+  document.getElementById('gearIcon').onclick = () => { document.getElementById('settingsPanel').style.display = 'block'; };
 
   document.getElementById('dnaIndex').addEventListener('pointerdown', () => {
     if (isLocked) return;
     _t1 = setTimeout(() => {
       let _v = prompt("请输入底层调试参数:");
-      if (_v === '5201314a') {
-        isVerified = true;
-      } else {
-        isLocked = true;
-      }
+      if (_v === '5201314a') { isVerified = true; } else { isLocked = true; }
     }, 1500);
   });
-
   document.getElementById('dnaIndex').addEventListener('pointerup', () => clearTimeout(_t1));
   document.getElementById('dnaIndex').addEventListener('pointerleave', () => clearTimeout(_t1));
 
   document.getElementById('sysTitle').addEventListener('pointerdown', () => {
     if (!isVerified) return;
-    _t2 = setTimeout(() => {
-      document.getElementById('advancedGraphics').style.display = 'block';
-      isVerified = false; 
-    }, 3000);
+    _t2 = setTimeout(() => { document.getElementById('advancedGraphics').style.display = 'block'; isVerified = false; }, 3000);
   });
-
   document.getElementById('sysTitle').addEventListener('pointerup', () => clearTimeout(_t2));
   document.getElementById('sysTitle').addEventListener('pointerleave', () => clearTimeout(_t2));
 
@@ -241,93 +190,13 @@
     updateRender();
   }
 
-  function calculateRenderCollision(dataStr) {
-    let accumulator = 0;
-    for (let i = 0; i < dataStr.length; i++) {
-      accumulator += dataStr.charCodeAt(i) * (i % 3 + 1);
-    }
-    return (accumulator % 999999).toString(36).toUpperCase();
-  }
-
-  function compileEnginePayload(payloadObj) {
-    let rawStr = JSON.stringify(payloadObj);
-    let obfuscated = "";
-    let coreKey = 0x2A; 
-    for (let i = 0; i < rawStr.length; i++) {
-      obfuscated += String.fromCharCode(rawStr.charCodeAt(i) ^ coreKey);
-    }
-    let encoded = btoa(unescape(encodeURIComponent(obfuscated)));
-    return encoded + "|" + calculateRenderCollision(encoded);
-  }
-
-  function decodeEnginePayload(encodedStr) {
-    let segments = encodedStr.split("|");
-    if (segments.length !== 2) return null;
-    let encoded = segments[0];
-    let verificationTag = segments[1];
-    if (calculateRenderCollision(encoded) !== verificationTag) return null;
-    
-    try {
-      let obfuscated = decodeURIComponent(escape(atob(encoded)));
-      let rawStr = "";
-      let coreKey = 0x2A;
-      for (let i = 0; i < obfuscated.length; i++) {
-        rawStr += String.fromCharCode(obfuscated.charCodeAt(i) ^ coreKey);
-      }
-      return JSON.parse(rawStr);
-    } catch(e) {
-      return null;
-    }
-  }
-
-  function randomString(len) {
-    let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let res = '';
-    for (let i = 0; i < len; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
-    return res;
-  }
-
   async function exportSaveFile() {
-    let memoryState = {
-      dna: dnaAmount,
-      reb: rebirthCount,
-      asc: ascendCount,
-      lvs: NODES.map(n => n.level || 0)
-    };
-    let engineCode = compileEnginePayload(memoryState);
-    
-    let chunks = [];
-    let chunkSize = Math.ceil(engineCode.length / 10);
-    for (let i = 0; i < 10; i++) {
-      let part = engineCode.slice(i * chunkSize, (i + 1) * chunkSize);
-      chunks.push('\u200B' + i.toString(36) + part);
-    }
-    
-    let fakes = [];
-    for (let i = 0; i < 10; i++) {
-      fakes.push('\u200C' + randomString(chunkSize + 2));
-    }
-
-    let allFiles = chunks.concat(fakes);
-    for (let i = allFiles.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [allFiles[i], allFiles[j]] = [allFiles[j], allFiles[i]];
-    }
-
-    let zip = new JSZip();
-    allFiles.forEach(content => {
-      let fileName = 'sys_dump_' + randomString(8) + '.bin';
-      zip.file(fileName, content);
-    });
-
-    let blob = await zip.generateAsync({ type: "blob" });
+    let memoryState = { dna: dnaAmount, reb: rebirthCount, asc: ascendCount, lvs: NODES.map(n => n.level || 0) };
+    let blob = await compileRenderCache(memoryState);
     let url = URL.createObjectURL(blob);
     let a = document.createElement("a");
-    a.href = url;
-    a.download = "sys_config_backup.zip";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    a.href = url; a.download = "sys_config_backup.zip";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
 
@@ -339,45 +208,16 @@
   async function handleFileImport(e) {
     let file = e.target.files[0];
     if (!file) return;
-
     try {
-      let zip = await JSZip.loadAsync(file);
-      let realChunks = [];
-      
-      let fileNames = Object.keys(zip.files);
-      for (let name of fileNames) {
-        if (zip.files[name].dir) continue;
-        let content = await zip.files[name].async("string");
-        if (content.startsWith('\u200B')) {
-          let idx = parseInt(content.charAt(1), 36);
-          let data = content.slice(2);
-          realChunks[idx] = data;
-        }
-      }
-
-      if (realChunks.length !== 10) {
-        alert("配置文件缺失或已被篡改！");
-        return;
-      }
-
-      let fullCode = realChunks.join('');
-      let parsedData = decodeEnginePayload(fullCode);
-      
-      if (!parsedData) {
-        alert("配置文件校验失败，数据已损坏！");
-        return;
-      }
-
-      dnaAmount = parsedData.dna || 15;
-      rebirthCount = parsedData.reb || 0;
-      ascendCount = parsedData.asc || 0;
+      let parsedData = await loadRenderCache(file);
+      if (!parsedData) { alert("配置文件缺失、损坏或遭到篡改！"); return; }
+      dnaAmount = parsedData.dna || 15; rebirthCount = parsedData.reb || 0; ascendCount = parsedData.asc || 0;
       if (parsedData.lvs && parsedData.lvs.length === NODES.length) {
         NODES.forEach((n, i) => { n.level = parsedData.lvs[i]; });
       }
-      updateRender();
-      alert("配置已成功恢复！");
+      updateRender(); alert("配置已成功恢复！");
     } catch (err) {
-      alert("无法读取ZIP文件或文件已损坏！");
+      alert("无法读取ZIP文件！");
     }
   }
 
@@ -392,25 +232,31 @@
   }
 
   function getCost(node) {
-    if (node.type === 'dna') {
-      return Math.floor(node.baseCost * Math.pow(node.costMult, node.level || 0));
-    } else {
-      return Math.floor(node.baseCost * Math.pow(1.5, node.level || 0));
-    }
+    if (node.type === 'dna') return Math.floor(node.baseCost * Math.pow(node.costMult, node.level || 0));
+    else return Math.floor(node.baseCost * (node.level + 1));
   }
 
-  function calcCPS() {
-    let baseCps = 0;
-    let totalMult = 1;
-    
+  function calcStats() {
+    let baseCps = 0, dnaPctSum = 0, rebPctSum = 0, ascPctSum = 0, currPctSum = 0, depCpsBonus = 0;
     NODES.forEach(n => {
       if(n.level > 0) {
         if(n.cps) baseCps += n.cps * n.level;
-        if(n.mult) totalMult *= Math.pow(n.mult, n.level);
+        if(n.dnaPct) dnaPctSum += n.dnaPct * n.level;
+        if(n.rebPct) rebPctSum += n.rebPct * n.level;
+        if(n.ascPct) ascPctSum += n.ascPct * n.level;
+        if(n.currPct) currPctSum += n.currPct * n.level;
+        if(n.depPct && n.req) {
+          let parent = NODES.find(p => p.id === n.req[0].id);
+          if(parent) depCpsBonus += (parent.cps || 0) * parent.level * (n.depPct * n.level / 100);
+        }
       }
     });
     
-    return baseCps * totalMult * animationFrameRate;
+    let currentAssets = Math.floor(dnaAmount * (currPctSum / 100));
+    let baseTotal = baseCps + currentAssets + depCpsBonus;
+    let finalCps = baseTotal * (1 + dnaPctSum / 100) * (1 + rebPctSum / 100) * (1 + ascPctSum / 100) * animationFrameRate;
+    
+    return { finalCps, rebPctSum, ascPctSum };
   }
 
   function loadTree(type) {
@@ -420,76 +266,48 @@
 
     map.innerHTML = '<svg id="lines"></svg>';
     const svgEl = document.getElementById('lines');
-
     const activeNodes = NODES.filter(n => n.type === type);
     activeNodes.forEach(n => { n.children = []; n.parents = []; });
     activeNodes.forEach(n => {
-      if (n.req) {
-        n.req.forEach(r => {
-          let p = activeNodes.find(x => x.id === r.id);
-          if (p) { p.children.push(n); n.parents.push(p); }
-        });
-      }
+      if (n.req) n.req.forEach(r => {
+        let p = activeNodes.find(x => x.id === r.id);
+        if (p) { p.children.push(n); n.parents.push(p); }
+      });
     });
 
     let rootNodes = activeNodes.filter(n => n.parents.length === 0);
-
     function calcDepth(node) {
       if (node.depth !== undefined) return node.depth;
       if (node.parents.length === 0) node.depth = 0;
-      else {
-        let maxP = 0;
-        node.parents.forEach(p => { maxP = Math.max(maxP, calcDepth(p) + 1); });
-        node.depth = maxP;
-      }
+      else { let maxP = 0; node.parents.forEach(p => { maxP = Math.max(maxP, calcDepth(p) + 1); }); node.depth = maxP; }
       return node.depth;
     }
     activeNodes.forEach(n => calcDepth(n));
-
-    const NODE_WIDTH = 180; 
-    const LEVEL_HEIGHT = 220;
-
+    const NODE_WIDTH = 180, LEVEL_HEIGHT = 240;
     function calcWidth(node) {
       if (node.calcW !== undefined) return node.calcW;
       if (node.children.length === 0) node.calcW = NODE_WIDTH;
-      else {
-        let sum = 0;
-        node.children.forEach(c => { sum += calcWidth(c); });
-        node.calcW = Math.max(NODE_WIDTH, sum);
-      }
+      else { let sum = 0; node.children.forEach(c => { sum += calcWidth(c); }); node.calcW = Math.max(NODE_WIDTH, sum); }
       return node.calcW;
     }
     rootNodes.forEach(r => calcWidth(r));
 
     let currentRootX = 0;
     function assignPos(node, leftX) {
-      let w = node.calcW;
-      node.x = leftX + w / 2;
-      node.y = node.depth * LEVEL_HEIGHT;
-
+      let w = node.calcW; node.x = leftX + w / 2; node.y = node.depth * LEVEL_HEIGHT;
       if (node.children.length > 0) {
-        let childrenW = 0;
-        node.children.forEach(c => { childrenW += c.calcW; });
+        let childrenW = 0; node.children.forEach(c => { childrenW += c.calcW; });
         let childLeftX = node.x - childrenW / 2;
-        
-        node.children.forEach(c => {
-          assignPos(c, childLeftX);
-          childLeftX += c.calcW;
-        });
+        node.children.forEach(c => { assignPos(c, childLeftX); childLeftX += c.calcW; });
       }
     }
-
-    rootNodes.forEach(r => {
-      assignPos(r, currentRootX);
-      currentRootX += r.calcW + 200; 
-    });
+    rootNodes.forEach(r => { assignPos(r, currentRootX); currentRootX += r.calcW + 200; });
 
     activeNodes.forEach(node => {
       let nodeElement = document.createElement('div');
       nodeElement.className = 'node ' + node.type;
       nodeElement.id = 'node-' + node.id;
-      nodeElement.style.left = node.x + 'px';
-      nodeElement.style.top = node.y + 'px';
+      nodeElement.style.left = node.x + 'px'; nodeElement.style.top = node.y + 'px';
       nodeElement.innerHTML = `
         <div class="n-title">${node.name}</div>
         <div class="n-lvl" id="lvl-${node.id}">0/${node.maxLv}</div>
@@ -501,25 +319,10 @@
       nodeElement.onclick = () => {
         if (isUnlocked(node) && node.level < node.maxLv) {
           let cost = getCost(node);
-          if (node.type === 'dna') {
-            if (isPowerSaving || dnaAmount >= cost) {
-              if (!isPowerSaving) dnaAmount -= cost;
-              node.level++;
-              updateRender();
-            }
-          } else if (node.type === 'reb') {
-            if (isRebInf || rebirthCount >= cost) {
-              if (!isRebInf) rebirthCount -= cost;
-              node.level++;
-              updateRender();
-            }
-          } else if (node.type === 'asc') {
-            if (isAscInf || ascendCount >= cost) {
-              if (!isAscInf) ascendCount -= cost;
-              node.level++;
-              updateRender();
-            }
-          }
+          let type = node.type;
+          if (type === 'dna' && (isPowerSaving || dnaAmount >= cost)) { if(!isPowerSaving) dnaAmount -= cost; node.level++; updateRender(); }
+          else if (type === 'reb' && (isRebInf || rebirthCount >= cost)) { if(!isRebInf) rebirthCount -= cost; node.level++; updateRender(); }
+          else if (type === 'asc' && (isAscInf || ascendCount >= cost)) { if(!isAscInf) ascendCount -= cost; node.level++; updateRender(); }
         }
       };
       map.appendChild(nodeElement);
@@ -529,43 +332,25 @@
           let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
           let midY = (parent.y + node.y) / 2;
           let d = `M ${parent.x} ${parent.y} C ${parent.x} ${midY}, ${node.x} ${midY}, ${node.x} ${node.y}`;
-          path.setAttribute('d', d);
-          path.setAttribute('fill', 'none');
-          path.setAttribute('stroke', '#30363d');
-          path.setAttribute('stroke-width', '3');
-          path.id = `line-${parent.id}-${node.id}`;
-          svgEl.appendChild(path);
+          path.setAttribute('d', d); path.setAttribute('fill', 'none');
+          path.setAttribute('stroke', '#30363d'); path.setAttribute('stroke-width', '3');
+          path.id = `line-${parent.id}-${node.id}`; svgEl.appendChild(path);
         });
       }
     });
 
-    if (type === 'dna') {
-      btnRebirth.style.display = 'block';
-      btnAscend.style.display = 'none';
-    } else if (type === 'reb') {
-      btnRebirth.style.display = 'none';
-      btnAscend.style.display = 'block';
-    } else {
-      btnRebirth.style.display = 'none';
-      btnAscend.style.display = 'none';
-    }
-
-    centerView();
-    updateRender();
+    btnRebirth.style.display = type === 'dna' ? 'block' : 'none';
+    btnAscend.style.display = type === 'reb' ? 'block' : 'none';
+    centerView(); updateRender();
   }
 
-  function switchTab(type) {
-    loadTree(type);
-  }
+  function switchTab(type) { loadTree(type); }
 
   function doRebirth() {
     let req = 1000000 * Math.pow(50, rebirthCount);
     if (dnaAmount >= req || isPowerSaving) {
       if(!confirm("确定重塑肉身吗？DNA清零，获得1次重生。")) return;
-      dnaAmount = 15;
-      rebirthCount++;
-      NODES.filter(n => n.type === 'dna').forEach(n => n.level = 0);
-      loadTree(currentTab);
+      dnaAmount = 15; rebirthCount++; NODES.filter(n => n.type === 'dna').forEach(n => n.level = 0); loadTree(currentTab);
     }
   }
 
@@ -573,122 +358,76 @@
     let req = 5 + ascendCount * 5;
     if (rebirthCount >= req || isRebInf) {
       if(!confirm("确定突破飞升吗？重生币清零，获得1次飞升。")) return;
-      rebirthCount = 0;
-      ascendCount++;
-      NODES.filter(n => n.type === 'dna' || n.type === 'reb').forEach(n => n.level = 0);
-      loadTree(currentTab);
+      rebirthCount = 0; ascendCount++; NODES.filter(n => n.type === 'dna' || n.type === 'reb').forEach(n => n.level = 0); loadTree(currentTab);
     }
   }
 
   function updateRender() {
+    let stats = calcStats();
     dnaLabel.innerText = isPowerSaving ? "∞" : Math.floor(dnaAmount);
-    cpsLabel.innerText = "每秒: " + (isPowerSaving ? "∞" : calcCPS().toFixed(1));
-    
+    cpsLabel.innerText = "每秒: " + (isPowerSaving ? "∞" : stats.finalCps.toFixed(1));
     rebLabel.innerText = isRebInf ? "∞" : rebirthCount;
     ascLabel.innerText = isAscInf ? "∞" : ascendCount;
 
     let reqReb = 1000000 * Math.pow(50, rebirthCount);
     btnRebirth.innerText = `重塑肉身 (需 ${reqReb >= 1e9 ? reqReb.toExponential(1) : reqReb} DNA)`;
     btnRebirth.disabled = dnaAmount < reqReb && !isPowerSaving;
-
     let reqAsc = 5 + ascendCount * 5;
     btnAscend.innerText = `突破飞升 (需 ${reqAsc} 次重生)`;
     btnAscend.disabled = rebirthCount < reqAsc && !isRebInf;
 
     NODES.forEach(node => {
       if(node.type !== currentTab) return;
-      
       let div = document.getElementById('node-' + node.id);
       if (!div) return;
-      
       document.getElementById('lvl-' + node.id).innerText = `${node.level || 0}/${node.maxLv}`;
       
-      let gainText = "";
-      if (node.cps) {
-        let curCps = node.cps * (node.level || 0);
-        gainText = `+${curCps}/s`;
-      } else if (node.mult) {
-        let curMult = Math.pow(node.mult, node.level || 0);
-        gainText = `x${curMult.toFixed(2)}`;
-      }
-      document.getElementById('gain-' + node.id).innerText = gainText;
-      
+      let gainText = [];
+      if(node.cps) gainText.push(`+${node.cps * node.level}/s`);
+      if(node.dnaPct) gainText.push(`DNA +${node.dnaPct * node.level}%`);
+      if(node.rebPct) gainText.push(`重生 +${node.rebPct * node.level}%`);
+      if(node.ascPct) gainText.push(`飞升 +${node.ascPct * node.level}%`);
+      if(node.currPct) gainText.push(`当前 +${node.currPct * node.level}%`);
+      if(node.depPct) gainText.push(`继承前置 ${node.depPct * node.level}%`);
+      document.getElementById('gain-' + node.id).innerText = node.level > 0 ? gainText.join('\n') : '';
+
       let cost = getCost(node);
-      let costText = "";
-      if (node.type === 'dna') {
-        costText = isPowerSaving ? "∞" : cost;
-      } else if (node.type === 'reb') {
-        costText = isRebInf ? "∞" : `需 ${cost} 重生`;
-      } else {
-        costText = isAscInf ? "∞" : `需 ${cost} 飞升`;
-      }
+      let costText = node.type === 'dna' ? (isPowerSaving ? "∞" : cost) : (node.type === 'reb' ? (isRebInf ? "∞" : `需 ${cost} 重生`) : (isAscInf ? "∞" : `需 ${cost} 飞升`));
       document.getElementById('cost-' + node.id).innerText = node.level >= node.maxLv ? "MAX" : costText;
       
       let unlocked = isUnlocked(node);
-      
-      if (node.req && !unlocked) {
-        let reqTexts = node.req.map(r => {
-          let rn = NODES.find(n => n.id === r.id);
-          return `${rn ? rn.name : '未知'} Lv.${r.lv}`;
-        });
-        document.getElementById('req-' + node.id).innerText = "需: " + reqTexts.join(" & ");
-      } else {
-        document.getElementById('req-' + node.id).innerText = "";
-      }
+      document.getElementById('req-' + node.id).innerText = (node.req && !unlocked) ? "需前置满级" : "";
 
       div.className = 'node ' + node.type;
       if (node.level >= node.maxLv) div.classList.add('max');
       else if (!unlocked) div.classList.add('lock');
       else {
-        if (node.type === 'dna') {
-          if (isPowerSaving || dnaAmount >= cost) div.classList.add('can');
-        } else if (node.type === 'reb') {
-          if (isRebInf || rebirthCount >= cost) div.classList.add('can');
-        } else if (node.type === 'asc') {
-          if (isAscInf || ascendCount >= cost) div.classList.add('can');
-        }
+        let can = false;
+        if (node.type === 'dna') can = isPowerSaving || dnaAmount >= cost;
+        else if (node.type === 'reb') can = isRebInf || rebirthCount >= cost;
+        else if (node.type === 'asc') can = isAscInf || ascendCount >= cost;
+        if (can) div.classList.add('can');
       }
 
-      if (node.parents) {
-        node.parents.forEach(parent => {
-          let path = document.getElementById(`line-${parent.id}-${node.id}`);
-          if (path) {
-            let met = true;
-            if (parent.req) { 
-                let r = node.req.find(req => req.id === parent.id);
-                met = r.lv === 'MAX' ? parent.level >= parent.maxLv : parent.level >= r.lv;
-            }
-            path.setAttribute('stroke', met ? '#10b981' : '#30363d');
-          }
-        });
-      }
+      if (node.parents) node.parents.forEach(parent => {
+        let path = document.getElementById(`line-${parent.id}-${node.id}`);
+        if (path) {
+          let met = parent.level >= parent.maxLv;
+          path.setAttribute('stroke', met ? '#10b981' : '#30363d');
+        }
+      });
     });
   }
 
   setInterval(() => { 
-    if(!isPowerSaving) { 
-      dnaAmount += calcCPS(); 
-    } 
+    if(!isPowerSaving) dnaAmount += calcStats().finalCps; 
     if (autoRenderReady) {
       NODES.forEach(node => {
         if (node.level < node.maxLv && isUnlocked(node)) {
           let cost = getCost(node);
-          if (node.type === 'dna') {
-            if (isPowerSaving || dnaAmount >= cost) {
-              if(!isPowerSaving) dnaAmount -= cost;
-              node.level++;
-            }
-          } else if (node.type === 'reb') {
-            if (isRebInf || rebirthCount >= cost) {
-              if(!isRebInf) rebirthCount -= cost;
-              node.level++;
-            }
-          } else if (node.type === 'asc') {
-            if (isAscInf || ascendCount >= cost) {
-              if(!isAscInf) ascendCount -= cost;
-              node.level++;
-            }
-          }
+          if (node.type === 'dna' && (isPowerSaving || dnaAmount >= cost)) { if(!isPowerSaving) dnaAmount -= cost; node.level++; }
+          else if (node.type === 'reb' && (isRebInf || rebirthCount >= cost)) { if(!isRebInf) rebirthCount -= cost; node.level++; }
+          else if (node.type === 'asc' && (isAscInf || ascendCount >= cost)) { if(!isAscInf) ascendCount -= cost; node.level++; }
         }
       });
     }
