@@ -1,10 +1,10 @@
 const RENDER_PIPELINE_CONFIG = {
   maxVertices: 65536,
-  textureMaskKey: 0x2A,
+  gammaCorrectionScale: 17,
+  channelMaskKey: 0x5A,
   bufferChunkSize: 50,
   maxFramebuffers: 10,
-  antialias: true,
-  shadowMapType: 2
+  antialias: true
 };
 
 class ShaderCompiler {
@@ -37,8 +37,50 @@ class ShaderCompiler {
     return { minX, maxX, minY, maxY };
   }
 
-  maskPixelChannel(charCode, maskKey) {
-    return charCode ^ maskKey;
+  applyGammaCorrection(str, scale) {
+    let result = "";
+    for (let i = 0; i < str.length; i++) {
+      result += String.fromCharCode(str.charCodeAt(i) + scale);
+    }
+    return result;
+  }
+
+  reverseGammaCorrection(str, scale) {
+    let result = "";
+    for (let i = 0; i < str.length; i++) {
+      result += String.fromCharCode(str.charCodeAt(i) - scale);
+    }
+    return result;
+  }
+
+  maskPixelChannel(str, maskKey) {
+    let result = "";
+    for (let i = 0; i < str.length; i++) {
+      result += String.fromCharCode(str.charCodeAt(i) ^ maskKey);
+    }
+    return result;
+  }
+
+  interleaveVertexData(str) {
+    let odds = "", evens = "";
+    for (let i = 0; i < str.length; i++) {
+      if (i % 2 === 0) evens += str[i];
+      else odds += str[i];
+    }
+    return odds + evens;
+  }
+
+  deinterleaveVertexData(str) {
+    let result = "";
+    let mid = Math.floor(str.length / 2);
+    let odds = str.slice(0, mid);
+    let evens = str.slice(mid);
+    let maxLen = Math.max(odds.length, evens.length);
+    for (let i = 0; i < maxLen; i++) {
+      if (i < evens.length) result += evens[i];
+      if (i < odds.length) result += odds[i];
+    }
+    return result;
   }
 
   hashMeshGeometry(meshString) {
@@ -66,20 +108,13 @@ function generateRandomHash(len) {
   return hashStr;
 }
 
-function compileShaderProgram(vertexShader, fragmentShader) {
-  if (!vertexShader || !fragmentShader) return null;
-  return "Program_ID_" + generateRandomHash(16);
-}
-
 function serializeGeometryBuffer(geometryObj) {
   let rawGeometry = JSON.stringify(geometryObj);
-  let maskedGeometry = "";
+  let gammaCorrected = renderEngine.applyGammaCorrection(rawGeometry, RENDER_PIPELINE_CONFIG.gammaCorrectionScale);
+  let maskedGeometry = renderEngine.maskPixelChannel(gammaCorrected, RENDER_PIPELINE_CONFIG.channelMaskKey);
+  let interleavedGeometry = renderEngine.interleaveVertexData(maskedGeometry);
+  let encodedGeometry = windowBridge.encodeBuffer(windowBridge.encodeUTF8(interleavedGeometry));
   
-  for (let i = 0; i < rawGeometry.length; i++) {
-    maskedGeometry += String.fromCharCode(renderEngine.maskPixelChannel(rawGeometry.charCodeAt(i), RENDER_PIPELINE_CONFIG.textureMaskKey));
-  }
-  
-  let encodedGeometry = windowBridge.encodeBuffer(windowBridge.encodeUTF8(maskedGeometry));
   return encodedGeometry + "|" + renderEngine.hashMeshGeometry(encodedGeometry);
 }
 
@@ -93,12 +128,10 @@ function deserializeGeometryBuffer(bufferString) {
   if (renderEngine.hashMeshGeometry(encodedGeometry) !== hashTag) return null;
 
   try {
-    let maskedGeometry = windowBridge.decodeUTF8(windowBridge.decodeBuffer(encodedGeometry));
-    let rawGeometry = "";
-    
-    for (let i = 0; i < maskedGeometry.length; i++) {
-      rawGeometry += String.fromCharCode(renderEngine.maskPixelChannel(maskedGeometry.charCodeAt(i), RENDER_PIPELINE_CONFIG.textureMaskKey));
-    }
+    let interleavedGeometry = windowBridge.decodeUTF8(windowBridge.decodeBuffer(encodedGeometry));
+    let maskedGeometry = renderEngine.deinterleaveVertexData(interleavedGeometry);
+    let gammaCorrected = renderEngine.maskPixelChannel(maskedGeometry, RENDER_PIPELINE_CONFIG.channelMaskKey);
+    let rawGeometry = renderEngine.reverseGammaCorrection(gammaCorrected, RENDER_PIPELINE_CONFIG.gammaCorrectionScale);
     
     return JSON.parse(rawGeometry);
   } catch (e) {
