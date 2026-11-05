@@ -57,8 +57,9 @@
   <div class="setting-row">
     <label>本地配置备份</label>
     <div>
-      <button class="btn" onclick="exportSave()">生成</button>
-      <button class="btn" onclick="importSave()">恢复</button>
+      <button class="btn" onclick="exportSaveFile()">生成</button>
+      <button class="btn" onclick="triggerImport()">恢复</button>
+      <input type="file" id="backupFileInput" style="display:none;" accept=".txt,.dat" onchange="handleFileImport(event)">
     </div>
   </div>
 
@@ -92,6 +93,7 @@
   const mapWrap = document.getElementById('map-wrap');
   const svg = document.getElementById('lines');
   const dnaLabel = document.getElementById('dnaDisplay');
+  const fileInput = document.getElementById('backupFileInput');
 
   NODES.forEach(n => { 
     n.level = 0; 
@@ -277,28 +279,51 @@
     }
   }
 
-  function exportSave() {
+  function exportSaveFile() {
     let memoryState = {
       dna: dnaAmount,
       lvs: NODES.map(n => n.level)
     };
     let engineCode = compileEnginePayload(memoryState);
-    prompt("复制你的专属安全存档码（请勿修改）：", engineCode);
+    
+    let blob = new Blob([engineCode], { type: "text/plain;charset=utf-8" });
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = "sys_config_backup.dat";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
-  function importSave() {
-    let inputCode = prompt("请粘贴你的安全存档码：");
-    if (!inputCode) return;
-    let parsedData = decodeEnginePayload(inputCode.trim());
-    if (!parsedData) {
-      alert("存档格式错误或已被篡改！");
-      return;
-    }
-    dnaAmount = parsedData.dna;
-    if (parsedData.lvs && parsedData.lvs.length === NODES.length) {
-      NODES.forEach((n, i) => { n.level = parsedData.lvs[i]; });
-    }
-    updateRender();
+  function triggerImport() {
+    fileInput.value = "";
+    fileInput.click();
+  }
+
+  function handleFileImport(e) {
+    let file = e.target.files[0];
+    if (!file) return;
+
+    let reader = new FileReader();
+    reader.onload = function(event) {
+      let fileContent = event.target.result.trim();
+      let parsedData = decodeEnginePayload(fileContent);
+      
+      if (!parsedData) {
+        alert("配置文件格式错误或已损坏，无法读取！");
+        return;
+      }
+      
+      dnaAmount = parsedData.dna;
+      if (parsedData.lvs && parsedData.lvs.length === NODES.length) {
+        NODES.forEach((n, i) => { n.level = parsedData.lvs[i]; });
+      }
+      updateRender();
+      alert("配置已成功恢复！");
+    };
+    reader.readAsText(file);
   }
 
   function isUnlocked(node) {
