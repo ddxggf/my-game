@@ -30,7 +30,7 @@
             flex-direction: column;
         }
 
-        /* 顶部工具栏 */
+        /* 顶部卡片栏 */
         #top-bar {
             height: 85px;
             background-color: #7a4b22;
@@ -83,17 +83,9 @@
             font-size: 16px;
         }
 
-        .card.sm {
-            background: linear-gradient(135deg, #4facfe, #00f2fe);
-        }
-
-        .card.ym {
-            background: linear-gradient(135deg, #fa709a, #fee140);
-        }
-
-        .card.whole {
-            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
-        }
+        .card.sm { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .card.ym { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .card.whole { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
 
         #tools {
             display: flex;
@@ -133,13 +125,8 @@
             transition: box-shadow 0.3s;
         }
 
-        #lawn.can-plant {
-            box-shadow: inset 0 0 30px rgba(255, 230, 128, 0.8);
-        }
-
-        #lawn.can-shovel {
-            box-shadow: inset 0 0 30px rgba(255, 100, 100, 0.8);
-        }
+        #lawn.can-plant { box-shadow: inset 0 0 30px rgba(255, 230, 128, 0.8); }
+        #lawn.can-shovel { box-shadow: inset 0 0 30px rgba(255, 100, 100, 0.8); }
 
         /* 状态栏 */
         #hud {
@@ -173,14 +160,8 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
         }
 
-        #stage.hide {
-            display: none;
-        }
-
-        #stage-text {
-            font-size: 20px;
-            font-weight: bold;
-        }
+        #stage.hide { display: none; }
+        #stage-text { font-size: 20px; font-weight: bold; }
 
         #stage-clear {
             background-color: #ff6b6b;
@@ -228,10 +209,7 @@
             border: 1px solid rgba(255, 255, 255, 0.5);
         }
 
-        .p-emoji {
-            font-size: 30px;
-            margin-top: 2px;
-        }
+        .p-emoji { font-size: 30px; margin-top: 2px; }
 
         /* 僵尸 */
         .zombie {
@@ -246,15 +224,9 @@
             transform: translate(-50%, -50%);
         }
 
-        .zombie.die {
-            animation: dieAnimation 0.4s forwards;
-        }
-
+        .zombie.die { animation: dieAnimation 0.4s forwards; }
         @keyframes dieAnimation {
-            to {
-                opacity: 0;
-                transform: translate(-50%, -80%) rotate(-30deg);
-            }
+            to { opacity: 0; transform: translate(-50%, -80%) rotate(-30deg); }
         }
 
         .z-head {
@@ -266,22 +238,9 @@
             border: 2px solid rgba(255, 255, 255, 0.5);
         }
 
-        .z-char {
-            font-size: 18px;
-            font-weight: 900;
-            color: #fff;
-        }
-
-        .z-pinyin {
-            font-size: 12px;
-            color: #ffd700;
-            font-weight: bold;
-        }
-
-        .z-body {
-            font-size: 36px;
-            line-height: 1;
-        }
+        .z-char { font-size: 18px; font-weight: 900; color: #fff; }
+        .z-pinyin { font-size: 12px; color: #ffd700; font-weight: bold; }
+        .z-body { font-size: 36px; line-height: 1; }
 
         .z-hp {
             width: 44px;
@@ -292,11 +251,7 @@
             overflow: hidden;
         }
 
-        .z-hp-bar {
-            height: 100%;
-            background-color: #ff4b4b;
-            width: 100%;
-        }
+        .z-hp-bar { height: 100%; background-color: #ff4b4b; width: 100%; }
 
         /* 子弹 */
         .bullet {
@@ -323,9 +278,7 @@
             color: #fff;
         }
 
-        #tone-modal.show, #overlay.show, #start-screen.show {
-            display: flex;
-        }
+        #tone-modal.show, #overlay.show, #start-screen.show { display: flex; }
 
         .modal-box {
             background-color: #fff;
@@ -336,12 +289,7 @@
             color: #333;
         }
 
-        #tone-base {
-            font-size: 30px;
-            font-weight: 900;
-            color: #e74c3c;
-            margin-bottom: 15px;
-        }
+        #tone-base { font-size: 30px; font-weight: 900; color: #e74c3c; margin-bottom: 15px; }
 
         .tone-btns button {
             display: block;
@@ -372,10 +320,7 @@
             white-space: nowrap;
         }
 
-        #toast.show {
-            opacity: 1;
-            transform: translate(-50%, 0);
-        }
+        #toast.show { opacity: 1; transform: translate(-50%, 0); }
 
         /* 开始界面 */
         #start-screen h1 {
@@ -459,7 +404,9 @@
     <button id="btn-start">开始游戏</button>
 </div>
 
+<!-- 这里引入您的 noodles.js -->
 <script src="noodles.js"></script>
+
 <script>
     // ======== 辅助函数 ========
     function addToneMark(py, tone) {
