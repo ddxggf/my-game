@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>植物大战僵尸 · 拼音版</title>
 <script>
-    // 捕获全局错误直接弹窗，绝不静默死机
     window.onerror = function(msg) {
         alert("⚠️ 游戏运行出错，请截图反馈：\n" + msg);
         return false;
@@ -594,6 +593,14 @@ body{width:100vw;height:100vh;background:#2b1b10;overflow:hidden;font-family:"Mi
             let activeRows = [0,1,2,3,4].filter(r => laneProtectWaves[r] === 0);
             if (activeRows.length === 0) activeRows = [0,1,2,3,4];
             
+            // 🌟 核心改动：按剩余行数计算“概率吞怪”
+            let rowCount = activeRows.length;
+            let deleteChance = 0;
+            if (rowCount === 4) deleteChance = 0.10;
+            else if (rowCount === 3) deleteChance = 0.20;
+            else if (rowCount === 2) deleteChance = 0.30;
+            else if (rowCount === 1) deleteChance = 0.35;
+
             let spawnList = [];
             if (huge) {
                 for (let i = 0; i < 2; i++) {
@@ -607,20 +614,27 @@ body{width:100vw;height:100vh;background:#2b1b10;overflow:hidden;font-family:"Mi
                 let zType = zombieTypes[type];
                 let cost = zType.cost;
                 if (cost <= budget) {
+                    budget -= cost;
+                    
+                    // 🌟 判定是否直接吞掉这只僵尸
+                    if (Math.random() < deleteChance) {
+                        continue; // 吞掉，不加入出场队列
+                    }
+                    
                     let row = activeRows[Math.floor(Math.random() * activeRows.length)];
                     spawnList.push({ type: type, row: row });
-                    budget -= cost;
                 } else {
                     break; 
                 }
             }
 
+            // 强制 1 秒间隔
             spawnList.forEach((item, index) => {
                 setTimeout(() => {
                     if (running && waveState === 'active') {
                         createZombieDOM(item.type, item.row);
                     }
-                }, index * 500);
+                }, index * 1000);
             });
         }
 
