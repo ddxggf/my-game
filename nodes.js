@@ -2,6 +2,7 @@ const INITIALS = ['b','p','m','f','d','t','n','l','g','k','h','j','q','x','r','z
 const FINALS = ['a','o','e','i','u','ü','ai','ei','ui','ao','ou','iu','ie','üe','er','an','en','in','un','ün','ang','eng','ing','ong','ia','ua','uo','iao','ian','uai','uan','uang'];
 const WHOLE_SYLLABLES = ['zhi','chi','shi','ri','zi','ci','si','yi','wu','yu','ye','yue','yuan','yin','yun','ying'];
 const VALID_PINYINS = new Set("ba bo bai bei bao ban ben bang beng bi bie biao bian bin bing bu pa po pai pei pao pou pan pen pang peng pi pie piao pian pin ping pu ma mo me mai mei mao mou man men mang meng mi mie miao miu mian min ming mu fa fo fei fou fan fen fang feng fu da de dai dei dao dou dan den dang deng dong di die diao diu dian ding du duo dui duan dun ta te tai tao tou tan tang teng tong ti tie tiao tian ting tu tuo tui tuan tun na ne nai nei nao nou nan nen nang neng nong ni nie niao niu nian nin niang ning nu nuo nuan nü nüe la le lai lei lao lou lan lang leng long li lia lie liao liu lian lin liang ling lu luo luan lun lü lüe ga ge gai gei gao gou gan gen gang geng gong gu gua guo guai gui guan gun guang ka ke kai kei kao kou kan ken kang keng kong ku kua kuo kuai kui kuan kun kuang ha he hai hei hao hou han hen hang heng hong hu hua huo huai hui huan hun huang ji jia jie jiao jiu jian jin jiang jing jiong ju jue juan jun qi qia qie qiao qiu qian qin qiang qing qiong qu que quan qun xi xia xie xiao xiu xian xin xiang xing xiong xu xue xuan xun zha zhe zhi zhai zhei zhao zhou zhan zhen zhang zheng zhong zhu zhua zhuo zhuai zhui zhuan zhun zhuang cha che chi chai chao chou chan chen chang cheng chong chu chua chuo chuai chui chuan chun chuang sha she shi shai shei shao shou shan shen shang sheng shu shua shuo shuai shui shuan shun shuang re ri rao rou ran ren rang reng rong ru rua ruo rui ruan run za ze zi zai zei zao zou zan zen zang zeng zong zu zuo zui zuan zun ca ce ci cai cao cou can cen cang ceng cong cu cuo cui cuan cun sa se si sai sao sou san sen sang seng song su suo sui suan sun ya ye yao you yan yin yang ying yong yi yu yue yuan yun wa wo wai wei wan wen wang weng wu".split(' '));
+
 const WORDS = [
 {c:'妈',p:'ma',t:1,s:'m',y:'a'},{c:'麻',p:'ma',t:2,s:'m',y:'a'},{c:'马',p:'ma',t:3,s:'m',y:'a'},{c:'骂',p:'ma',t:4,s:'m',y:'a'},
 {c:'花',p:'hua',t:1,s:'h',y:'ua'},{c:'话',p:'hua',t:4,s:'h',y:'ua'},{c:'猫',p:'mao',t:1,s:'m',y:'ao'},{c:'毛',p:'mao',t:2,s:'m',y:'ao'},
@@ -23,32 +24,5 @@ const WORDS = [
 {c:'他',p:'ta',t:1,s:'t',y:'a'},{c:'外',p:'wai',t:4,s:'w',y:'ai'},{c:'我',p:'wo',t:3,s:'w',y:'o'},{c:'五',p:'wu',t:3,w:'wu'},
 {c:'西',p:'xi',t:1,s:'x',y:'i'},{c:'下',p:'xia',t:4,s:'x',y:'ia'},{c:'一',p:'yi',t:1,w:'yi'},{c:'用',p:'yong',t:4,s:'y',y:'ong'},
 {c:'有',p:'you',t:3,s:'y',y:'ou'},{c:'早',p:'zao',t:3,s:'z',y:'ao'},{c:'站',p:'zhan',t:4,s:'zh',y:'an'},{c:'中',p:'zhong',t:1,s:'zh',y:'ong'},
-{c:'字',p:'zi',t:4,w:'zi'},{c:'走',p:'zou',t:3,s:'z',y:'ou'},{c:'爸',p:'ba',t:4,s:'b',y:'a'},{c:'半',p:'ban',t:4,s:'b',y:'an'},
-{c:'本',p:'ben',t:3,s:'b',y:'en'},{c:'比',p:'bi',t:3,s:'b',y:'i'},{c:'边',p:'bian',t:1,s:'b',y:'ian'},{c:'别',p:'bie',t:2,s:'b',y:'ie'},
-{c:'才',p:'cai',t:2,s:'c',y:'ai'},{c:'长',p:'chang',t:2,s:'ch',y:'ang'},{c:'车',p:'che',t:1,s:'ch',y:'e'},{c:'春',p:'chun',t:1,s:'ch',y:'un'},
-{c:'带',p:'dai',t:4,s:'d',y:'ai'},{c:'到',p:'dao',t:4,s:'d',y:'ao'},{c:'灯',p:'deng',t:1,s:'d',y:'eng'},{c:'点',p:'dian',t:3,s:'d',y:'ian'},
-{c:'电',p:'dian',t:4,s:'d',y:'ian'},{c:'东',p:'dong',t:1,s:'d',y:'ong'},{c:'动',p:'dong',t:4,s:'d',y:'ong'},{c:'读',p:'du',t:2,s:'d',y:'u'},
-{c:'饿',p:'e',t:4,s:'',y:'e'},{c:'耳',p:'er',t:3,s:'',y:'er'},{c:'二',p:'er',t:4,s:'',y:'er'},{c:'房',p:'fang',t:2,s:'f',y:'ang'},
-{c:'放',p:'fang',t:4,s:'f',y:'ang'},{c:'分',p:'fen',t:1,s:'f',y:'en'},{c:'服',p:'fu',t:2,s:'f',y:'u'},{c:'哥',p:'ge',t:1,s:'g',y:'e'},
-{c:'个',p:'ge',t:4,s:'g',y:'e'},{c:'给',p:'gei',t:3,s:'g',y:'ei'},{c:'关',p:'guan',t:1,s:'g',y:'uan'},{c:'光',p:'guang',t:1,s:'g',y:'uang'},
-{c:'过',p:'guo',t:4,s:'g',y:'uo'},{c:'孩',p:'hai',t:2,s:'h',y:'ai'},{c:'海',p:'hai',t:3,s:'h',y:'ai'},{c:'号',p:'hao',t:4,s:'h',y:'ao'},
-{c:'喝',p:'he',t:1,s:'h',y:'e'},{c:'和',p:'he',t:2,s:'h',y:'e'},{c:'黑',p:'hei',t:1,s:'h',y:'ei'},{c:'后',p:'hou',t:4,s:'h',y:'ou'},
-{c:'画',p:'hua',t:4,s:'h',y:'ua'},{c:'回',p:'hui',t:2,s:'h',y:'ui'},{c:'会',p:'hui',t:4,s:'h',y:'ui'},{c:'几',p:'ji',t:3,s:'j',y:'i'},
-{c:'姐',p:'jie',t:3,s:'j',y:'ie'},{c:'借',p:'jie',t:4,s:'j',y:'ie'},{c:'进',p:'jin',t:4,s:'j',y:'in'},{c:'京',p:'jing',t:1,s:'j',y:'ing'},
-{c:'就',p:'jiu',t:4,s:'j',y:'iu'},{c:'口',p:'kou',t:3,s:'k',y:'ou'},{c:'了',p:'le',t:0,s:'l',y:'e'},{c:'冷',p:'leng',t:3,s:'l',y:'eng'},
-{c:'里',p:'li',t:3,s:'l',y:'i'},{c:'六',p:'liu',t:4,s:'l',y:'iu'},{c:'路',p:'lu',t:4,s:'l',y:'u'},{c:'买',p:'mai',t:3,s:'m',y:'ai'},
-{c:'满',p:'man',t:3,s:'m',y:'an'},{c:'慢',p:'man',t:4,s:'m',y:'an'},{c:'面',p:'mian',t:4,s:'m',y:'ian'},{c:'苗',p:'miao',t:2,s:'m',y:'iao'},
-{c:'木',p:'mu',t:4,s:'m',y:'u'},{c:'哪',p:'na',t:3,s:'n',y:'a'},{c:'那',p:'na',t:4,s:'n',y:'a'},{c:'男',p:'nan',t:2,s:'n',y:'an'},
-{c:'南',p:'nan',t:2,s:'n',y:'an'},{c:'脑',p:'nao',t:3,s:'n',y:'ao'},{c:'能',p:'neng',t:2,s:'n',y:'eng'},{c:'年',p:'nian',t:2,s:'n',y:'ian'},
-{c:'朋',p:'peng',t:2,s:'p',y:'eng'},{c:'皮',p:'pi',t:2,s:'p',y:'i'},{c:'片',p:'pian',t:4,s:'p',y:'ian'},{c:'前',p:'qian',t:2,s:'q',y:'ian'},
-{c:'青',p:'qing',t:1,s:'q',y:'ing'},{c:'少',p:'shao',t:3,s:'sh',y:'ao'},{c:'身',p:'shen',t:1,s:'sh',y:'en'},{c:'生',p:'sheng',t:1,s:'sh',y:'eng'},
-{c:'是',p:'shi',t:4,w:'shi'},{c:'树',p:'shu',t:4,s:'sh',y:'u'},{c:'岁',p:'sui',t:4,s:'s',y:'ui'},{c:'太',p:'tai',t:4,s:'t',y:'ai'},
-{c:'同',p:'tong',t:2,s:'t',y:'ong'},{c:'头',p:'tou',t:2,s:'t',y:'ou'},{c:'土',p:'tu',t:3,s:'t',y:'u'},{c:'玩',p:'wan',t:2,s:'w',y:'an'},
-{c:'晚',p:'wan',t:3,s:'w',y:'an'},{c:'文',p:'wen',t:2,s:'w',y:'en'},{c:'问',p:'wen',t:4,s:'w',y:'en'},{c:'洗',p:'xi',t:3,s:'x',y:'i'},
-{c:'先',p:'xian',t:1,s:'x',y:'ian'},{c:'想',p:'xiang',t:3,s:'x',y:'iang'},{c:'笑',p:'xiao',t:4,s:'x',y:'iao'},{c:'写',p:'xie',t:3,s:'x',y:'ie'},
-{c:'心',p:'xin',t:1,s:'x',y:'in'},{c:'药',p:'yao',t:4,s:'y',y:'ao'},{c:'爷',p:'ye',t:2,s:'y',y:'e'},{c:'也',p:'ye',t:3,s:'y',y:'e'},
-{c:'夜',p:'ye',t:4,s:'y',y:'e'},{c:'衣',p:'yi',t:1,w:'yi'},{c:'右',p:'you',t:4,s:'y',y:'ou'},{c:'元',p:'yuan',t:2,w:'yuan'},
-{c:'远',p:'yuan',t:3,w:'yuan'},{c:'再',p:'zai',t:4,s:'z',y:'ai'},{c:'在',p:'zai',t:4,s:'z',y:'ai'},{c:'找',p:'zhao',t:3,s:'zh',y:'ao'},
-{c:'这',p:'zhe',t:4,s:'zh',y:'e'},{c:'真',p:'zhen',t:1,s:'zh',y:'en'},{c:'正',p:'zheng',t:4,s:'zh',y:'eng'},{c:'只',p:'zhi',t:3,w:'zhi'},
-{c:'住',p:'zhu',t:4,s:'zh',y:'u'},{c:'桌',p:'zhuo',t:1,s:'zh',y:'uo'},{c:'左',p:'zuo',t:3,s:'z',y:'uo'},{c:'做',p:'zuo',t:4,s:'z',y:'uo'}
+{c:'字',p:'zi',t:4,w:'zi'},{c:'走',p:'zou',t:3,s:'z',y:'ou'},{c:'爸',p:'ba',t:4,s:'b',y:'a'},{c:'半',p:'ban',t:4,s:'b',y:'an'}
 ];
