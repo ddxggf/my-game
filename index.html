@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>植物大战僵尸拼音版</title>
+<title>植物大战僵尸 拼音版</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-tap-highlight-color:transparent}
 body{width:100vw;height:100vh;background:#2b1b10;overflow:hidden;font-family:"Microsoft YaHei",sans-serif;position:fixed}
@@ -13,7 +13,8 @@ body{width:100vw;height:100vh;background:#2b1b10;overflow:hidden;font-family:"Mi
 .tab-btn{flex:1;background:none;border:none;color:#aaa;font-weight:bold;font-size:14px;cursor:pointer;border-bottom:3px solid transparent}
 .tab-btn.active{color:#ffe680;border-bottom-color:#ffe680;background:#7a4b22}
 #cards-wrapper{flex:1;display:flex;flex-wrap:wrap;overflow-y:auto;padding:8px 80px 8px 10px;gap:6px;align-items:flex-start;align-content:flex-start}
-.card{min-width:45px;height:50px;border-radius:8px;border:2px solid rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,0.4);margin:4px;flex-shrink:0}
+.card{min-width:45px;height:50px;border-radius:8px;border:2px solid rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,0.4);margin:4px;flex-shrink:0;transition:transform 0.1s}
+.card.selected{border-color:#ffe680;transform:translateY(-4px) scale(1.1);box-shadow:0 0 15px #ffe680;z-index:30}
 .card .text{font-weight:900;color:#fff;text-shadow:1px 1px 2px #000;font-size:16px}
 .card.sm{background:linear-gradient(135deg,#4facfe,#00f2fe)}
 .card.ym{background:linear-gradient(135deg,#fa709a,#fee140)}
@@ -71,6 +72,7 @@ body{width:100vw;height:100vh;background:#2b1b10;overflow:hidden;font-family:"Mi
 .btn-group{display:flex;flex-direction:column;gap:15px;z-index:2;align-items:center}
 .main-btns{display:flex;gap:15px}
 #btn-select-level{padding:15px 40px;font-size:20px;font-weight:900;color:#fff;background:linear-gradient(180deg,#4caf50,#388e3c);border:none;border-radius:30px;box-shadow:0 6px 0 #1b5e20;cursor:pointer}
+#btn-fullscreen-start{padding:15px 20px;font-size:20px;font-weight:900;color:#fff;background:linear-gradient(180deg,#ff9800,#f57c00);border:none;border-radius:30px;box-shadow:0 6px 0 #e65100;cursor:pointer}
 .sys-btns{display:flex;gap:15px;margin-top:10px}
 .sys-btns button{padding:10px 20px;font-size:14px;border-radius:20px;background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.5);cursor:pointer}
 #file-upload{display:none}
@@ -203,7 +205,6 @@ body{width:100vw;height:100vh;background:#2b1b10;overflow:hidden;font-family:"Mi
             let el = document.documentElement;
             if (el.requestFullscreen) el.requestFullscreen().catch(()=>{});
             else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-            
             if (screen.orientation && screen.orientation.lock) {
                 screen.orientation.lock('landscape').catch(()=>{});
             }
@@ -235,8 +236,7 @@ body{width:100vw;height:100vh;background:#2b1b10;overflow:hidden;font-family:"Mi
     let plants = [];
     let bullets = [];
     let mowers = [];
-    let selections = [];
-    let pendingPlant = null;
+    let selectedCard = null; 
     let isShovel = false;
     
     let lives = 5;
@@ -370,15 +370,27 @@ body{width:100vw;height:100vh;background:#2b1b10;overflow:hidden;font-family:"Mi
         let activeTab = document.querySelector('.tab-btn.active').textContent;
         if (activeTab === '声母表') {
             INITIALS.forEach(t => {
-                const el = document.createElement('div'); el.className = 'card sm'; el.innerHTML = `<div class="text">${t}</div>`; el.onclick = () => pickCard('sm', t); cardsBox.appendChild(el);
+                const el = document.createElement('div'); 
+                el.className = 'card sm' + (selectedCard && selectedCard.text === t && selectedCard.type === 'sm' ? ' selected' : ''); 
+                el.innerHTML = `<div class="text">${t}</div>`; 
+                el.onclick = () => pickCard('sm', t); 
+                cardsBox.appendChild(el);
             });
         } else if (activeTab === '韵母表') {
             FINALS.forEach(t => {
-                const el = document.createElement('div'); el.className = 'card ym'; el.innerHTML = `<div class="text">${t}</div>`; el.onclick = () => pickCard('ym', t); cardsBox.appendChild(el);
+                const el = document.createElement('div'); 
+                el.className = 'card ym' + (selectedCard && selectedCard.text === t && selectedCard.type === 'ym' ? ' selected' : ''); 
+                el.innerHTML = `<div class="text">${t}</div>`; 
+                el.onclick = () => pickCard('ym', t); 
+                cardsBox.appendChild(el);
             });
         } else {
             WHOLE_SYLLABLES.forEach(t => {
-                const el = document.createElement('div'); el.className = 'card whole'; el.innerHTML = `<div class="text" style="font-size:12px">${t}</div>`; el.onclick = () => pickCard('whole', t); cardsBox.appendChild(el);
+                const el = document.createElement('div'); 
+                el.className = 'card whole' + (selectedCard && selectedCard.text === t && selectedCard.type === 'whole' ? ' selected' : ''); 
+                el.innerHTML = `<div class="text" style="font-size:12px">${t}</div>`; 
+                el.onclick = () => pickCard('whole', t); 
+                cardsBox.appendChild(el);
             });
         }
     }
@@ -409,54 +421,16 @@ body{width:100vw;height:100vh;background:#2b1b10;overflow:hidden;font-family:"Mi
 
     function pickCard(type, text) {
         if (!running || isShovel) return;
-        if (type === 'whole') { selections = [{ type, text }]; checkPinyin(); return; }
-        if (type === 'sm') {
-            if (selections.length === 0 || selections[0].type === 'ym') { selections = [{ type, text }]; }
-            else if (selections[0].type === 'sm') {
-                const ext = selections[0].text;
-                if (['z','c','s'].includes(ext) && text === 'h') selections[0].text += 'h';
-                else if (ext === 'h' && ['z','c','s'].includes(text)) selections[0].text = text + 'h';
-                else selections[0] = { type, text };
-            }
-            updateStage(); return;
+        if (selectedCard && selectedCard.text === text && selectedCard.type === type) {
+            selectedCard = null;
+        } else {
+            selectedCard = { type, text };
         }
-        if (type === 'ym') {
-            if (selections.length === 1 && selections[0].type === 'sm') selections.push({ type, text });
-            else selections = [{ type, text }];
-            checkPinyin();
-        }
+        renderCards();
     }
 
-    function updateStage() {
-        if (selections.length === 0) { 
-            const st = document.getElementById('stage');
-            if(st) st.classList.add('hide'); 
-            return; 
-        }
-        const st = document.getElementById('stage');
-        if(st) {
-            st.classList.remove('hide');
-            document.getElementById('stage-text').textContent = selections.map(s => s.text).join(' + ');
-        }
-    }
-
-    function checkPinyin() {
-        if (selections.length === 0) return;
-        let base = '';
-        if (selections.length === 1 && selections[0].type === 'sm') { updateStage(); return; }
-        if (selections.length === 1 && !selections[0].type) { base = selections[0].text; } 
-        else {
-            let sm = selections.find(s => s.type === 'sm')?.text || '';
-            let ym = selections.find(s => s.type === 'ym')?.text || '';
-            if (['j','q','x'].includes(sm) && ym.startsWith('ü')) ym = 'u' + ym.slice(1);
-            else if (sm === 'y' && ym === 'ü') { sm = ''; ym = 'yu'; }
-            else if (sm === 'y' && ym.startsWith('ü')) { sm = ''; ym = 'y' + ym; }
-            else if (sm === 'y' && ym === 'u') { sm = ''; ym = 'yu'; }
-            else if (sm === 'w' && ym === 'u') { sm = ''; ym = 'wu'; }
-            base = sm + ym;
-        }
-        if (!base) return;
-        if (!VALID_PINYINS.has(base)) { showToast(`❌ 不支持这种拼法`); selections = selections.filter(s => s.type === 'sm'); updateStage(); return; }
+    function checkPinyin(base) {
+        if (!VALID_PINYINS.has(base)) { showToast(`❌ 不支持这种拼法`); return; }
         showToneModal(base);
     }
 
@@ -471,13 +445,24 @@ body{width:100vw;height:100vh;background:#2b1b10;overflow:hidden;font-family:"Mi
                 const finalPy = addToneMark(base, t);
                 if (plants.filter(p => p.pinyin === finalPy).length >= 2) { showToast(`❌ 场上「${finalPy}」已达上限(2个)！`); return; }
                 modal.classList.remove('show');
-                window.pendingPlant = { pinyin: finalPy };
-                showToast(`👉 点击草坪种下「${finalPy}」`);
-                selections = []; updateStage();
+                
+                if (window.currentMergeCell) {
+                    const el = document.createElement('div'); el.className = 'plant-box';
+                    el.innerHTML = `<div class="p-label">${finalPy}</div><div class="p-model"><div class="p-base"></div><div class="p-stem"></div><div class="p-head-full"></div></div>`;
+                    el.style.left = window.currentMergeCell.cx + 'px'; el.style.top = window.currentMergeCell.cy + 'px'; lawn.appendChild(el);
+                    
+                    if (window.currentMergeCell.content && window.currentMergeCell.content.el) window.currentMergeCell.content.el.remove();
+                    
+                    const p = { row: window.currentMergeCell.row, col: window.currentMergeCell.col, x: window.currentMergeCell.cx, y: window.currentMergeCell.cy, pinyin: finalPy, hp: 100, cooldown: 0.5, el, cell: window.currentMergeCell, killCount: 0 };
+                    window.currentMergeCell.content = { type: 'full', pinyin: finalPy, el, plantObj: p };
+                    plants.push(p);
+                    window.currentMergeCell = null;
+                }
+                selectedCard = null; renderCards();
             };
             box.appendChild(btn);
         });
-        const c = document.createElement('button'); c.textContent = '取消'; c.style.background = '#eee'; c.onclick = () => { modal.classList.remove('show'); };
+        const c = document.createElement('button'); c.textContent = '取消'; c.style.background = '#eee'; c.onclick = () => { modal.classList.remove('show'); window.currentMergeCell = null; };
         box.appendChild(c); modal.classList.add('show');
     }
 
@@ -500,6 +485,7 @@ body{width:100vw;height:100vh;background:#2b1b10;overflow:hidden;font-family:"Mi
         const cx = e.clientX - rect.left, cy = e.clientY - rect.top;
         const cell = cells.find(c => cx >= c.cx - c.w / 2 && cx <= c.cx + c.w / 2 && cy >= c.cy - c.h / 2 && cy <= c.cy + c.h / 2);
         if (!cell) return;
+        
         if (isShovel) {
             if (cell.content) {
                 if (cell.content.type === 'full') plants = plants.filter(p => p.el !== cell.content.el);
@@ -508,266 +494,43 @@ body{width:100vw;height:100vh;background:#2b1b10;overflow:hidden;font-family:"Mi
             isShovel = false; document.getElementById('btn-shovel').classList.remove('active'); lawn.classList.remove('can-shovel');
             return;
         }
-        if (window.pendingPlant) {
-            if (cell.content && cell.content.type === 'full') { showToast('这里已经有植物了！'); return; }
-            const el = createPlantDOM('full', window.pendingPlant.pinyin);
-            el.style.left = cell.cx + 'px'; el.style.top = cell.cy + 'px'; lawn.appendChild(el);
-            const p = { row: cell.row, col: cell.col, x: cell.cx, y: cell.cy, pinyin: window.pendingPlant.pinyin, hp: 100, cooldown: 0.5, el, cell, killCount: 0 };
-            cell.content = { type: 'full', pinyin: window.pendingPlant.pinyin, el, plantObj: p };
-            plants.push(p);
-            window.pendingPlant = null;
-        }
-    });
 
-    function getRandomZombieByWeight(weights) {
-        let totalWeight = 0;
-        for (let k in weights) totalWeight += weights[k];
-        let rand = Math.random() * totalWeight;
-        for (let k in weights) { rand -= weights[k]; if (rand <= 0) return k; }
-        return Object.keys(weights)[0];
-    }
-
-    function spawnWave() {
-        if (currentWave >= TOTAL_WAVES) {
-            if (zombies.length === 0) {
-                running = false; 
-                document.getElementById('over-title').textContent = "恭喜通关！"; 
-                document.getElementById('over-title').style.color = "#2ecc71";
-                document.getElementById('final-score').textContent = score;
-                document.getElementById('overlay').classList.add('show'); 
-                const token = _genRenderToken(levelIndex + 1);
-                if(token) localStorage.setItem('_v_layout_cache', token);
-                if (levelIndex < LEVELS.length - 1) {
-                    document.getElementById('btn-next-level').style.display = 'block';
-                } else {
-                    document.getElementById('btn-next-level').style.display = 'none';
-                }
-            }
+        if (!selectedCard) {
+            showToast('请先在顶部选择卡片！');
             return;
         }
-        currentWave++;
-        waveState = 'active';
-        waveStartTime = performance.now();
-        waveHud.textContent = `${currentLevel.name} | 波次 ${currentWave}/${TOTAL_WAVES}`;
-        
-        let huge = isHugeWave(currentLevel, currentWave);
-        if (huge) { hugeWaveText.style.display = 'block'; setTimeout(() => { hugeWaveText.style.display = 'none'; }, 2000); }
-        
-        let budget = calcWaveBudget(currentLevel, currentWave);
-        let activeRows = [0,1,2,3,4].filter(r => laneProtectWaves[r] === 0);
-        if (activeRows.length === 0) activeRows = [0,1,2,3,4];
-        
-        if (huge) {
-            for (let i = 0; i < 2; i++) {
-                let row = activeRows[Math.floor(Math.random() * activeRows.length)];
-                createZombieDOM('flag', row);
+
+        if (cell.content && cell.content.type === 'full') { showToast('这里已经有完全体植物了！'); return; }
+
+        if (!cell.content) {
+            if (selectedCard.type === 'whole') {
+                window.currentMergeCell = cell;
+                checkPinyin(selectedCard.text);
+                return;
+            }
+            const el = createPlantDOM(selectedCard.type, selectedCard.text);
+            el.style.left = cell.cx + 'px'; el.style.top = cell.cy + 'px'; lawn.appendChild(el);
+            cell.content = { type: selectedCard.type, text: selectedCard.text, el };
+            selectedCard = null; renderCards();
+            return;
+        }
+
+        const existing = cell.content;
+        let smStr = existing.type === 'sm' ? existing.text : (selectedCard.type === 'sm' ? selectedCard.text : '');
+        let ymStr = existing.type === 'ym' ? existing.text : (selectedCard.type === 'ym' ? selectedCard.text : '');
+
+        if (existing.type === 'sm' && selectedCard.type === 'sm') {
+            if (['z','c','s'].includes(existing.text) && selectedCard.text === 'h') {
+                smStr = existing.text + 'h'; ymStr = '';
+            } else if (existing.text === 'h' && ['z','c','s'].includes(selectedCard.text)) {
+                smStr = selectedCard.text + 'h'; ymStr = '';
+            } else {
+                showToast('两个声母无法合成！');
+                return;
             }
         }
 
-        while (budget >= 1) {
-            let type = getRandomZombieByWeight(currentLevel.weights);
-            let zType = zombieTypes[type];
-            let cost = zType.cost;
-            if (cost <= budget) {
-                let row = activeRows[Math.floor(Math.random() * activeRows.length)];
-                createZombieDOM(type, row);
-                budget -= cost;
-            }
-        }
-    }
-
-    function createZombieDOM(type, row) {
-        let zType = zombieTypes[type];
-        let isDouble = type.includes('double');
-        let tSym1 = '', tSym2 = '', charText = '', pinyin = '';
-        
-        let w1, w2;
-        if (isDouble) {
-            let dw = getDoubleWord();
-            w1 = dw.w1; w2 = dw.w2;
-            tSym1 = {1:'ˉ',2:'ˊ',3:'ˇ',4:'ˋ'}[w1.t] || '';
-            tSym2 = {1:'ˉ',2:'ˊ',3:'ˇ',4:'ˋ'}[w2.t] || '';
-            charText = w1.c + w2.c;
-            pinyin = addToneMark(w1.p, w1.t);
-        } else {
-            w1 = getRandomWord();
-            tSym1 = {1:'ˉ',2:'ˊ',3:'ˇ',4:'ˋ'}[w1.t] || '';
-            charText = w1.c;
-            pinyin = addToneMark(w1.p, w1.t);
-        }
-        
-        const cell = cells.find(c => c.row === row); if (!cell) return;
-        const el = document.createElement('div'); el.className = `zombie ${zType.cssClass}`;
-        el.innerHTML = `<div class="z-head"><div class="z-char">${charText}</div><div class="z-tone">${tSym1}${tSym2}</div></div><div class="z-body-wrap"><div class="z-body"></div></div><div class="z-hp"><div class="z-hp-bar"></div></div>`;
-        let x = lawn.clientWidth + 40;
-        el.style.left = x + 'px'; el.style.top = cell.cy + 'px'; lawn.appendChild(el);
-        
-        let hpMax = zType.hp;
-        zombies.push({
-            row, x, y: cell.cy, hp: hpMax, maxHp: hpMax, speed: zType.speed,
-            pinyin: pinyin, w1, w2, isDouble, phase: isDouble ? 1 : 0, type: type, el,
-            charEl: el.querySelector('.z-char'), toneEl: el.querySelector('.z-tone'), dead: false
-        });
-    }
-
-    function checkWaveLogic() {
-        if (waveState !== 'active') return;
-        let timeElapsed = performance.now() - waveStartTime;
-        let isHuge = isHugeWave(currentLevel, currentWave);
-
-        if (currentWave === TOTAL_WAVES) {
-            if (timeElapsed >= WAVE_CONFIG.finalWaveDelayMs) {
-                running = false; 
-                document.getElementById('over-title').textContent = "游戏胜利！"; 
-                document.getElementById('over-title').style.color = "#2ecc71";
-                document.getElementById('final-score').textContent = score;
-                document.getElementById('overlay').classList.add('show'); 
-                const token = _genRenderToken(levelIndex + 1);
-                if(token) localStorage.setItem('_v_layout_cache', token);
-                if (levelIndex < LEVELS.length - 1) {
-                    document.getElementById('btn-next-level').style.display = 'block';
-                } else {
-                    document.getElementById('btn-next-level').style.display = 'none';
-                }
-            }
-        } else if (isHuge) {
-            if (timeElapsed >= WAVE_CONFIG.hugeWaveIntervalMs) { 
-                waveState = 'waiting_next'; 
-                setTimeout(spawnWave, WAVE_CONFIG.redTextDelayMs); 
-            }
-        } else {
-            if (timeElapsed >= WAVE_CONFIG.waveIntervalMs) { 
-                waveState = 'waiting_next'; 
-                setTimeout(spawnWave, 2000); 
-            }
-        }
-    }
-
-    function update(dt) {
-        if (currentLevel.isConveyor && running) {
-            ['sm','ym','whole'].forEach(k => {
-                beltTimers[k] += dt * 1000;
-                if (beltTimers[k] >= 3000 && beltCards[k].length < 8) {
-                    let text = k === 'sm' ? INITIALS[Math.floor(Math.random() * INITIALS.length)] : (k === 'ym' ? FINALS[Math.floor(Math.random() * FINALS.length)] : WHOLE_SYLLABLES[Math.floor(Math.random() * WHOLE_SYLLABLES.length)]);
-                    beltCards[k].push(text); beltTimers[k] = 0;
-                    const el = document.createElement('div'); el.className = `belt-card ${k}`; el.innerHTML = `<div class="text">${text}</div>`;
-                    el.onclick = () => { beltCards[k].splice(beltCards[k].indexOf(text), 1); el.remove(); pickCard(k, text); beltTimers[k] = 0; };
-                    belts[k].appendChild(el);
-                }
-            });
-        }
-        checkWaveLogic();
-        mowers.forEach(m => {
-            if (!m.active) return;
-            const zHit = zombies.find(z => z.row === m.row && z.x <= 45 && z.x >= 0 && !z.dead);
-            if (zHit) {
-                m.active = false; laneProtectWaves[m.row] = 2;
-                let curX = m.x;
-                const anim = setInterval(() => {
-                    curX += 15; m.el.style.left = curX + 'px';
-                    zombies.forEach(z => { if (z.row === m.row && z.x <= curX + 20 && !z.dead) { z.dead = true; z.el.remove(); score += 10; updateHUD(); } });
-                    if (curX > lawn.clientWidth + 50) { clearInterval(anim); m.el.remove(); }
-                }, 20);
-            }
-        });
-
-        for (let i = zombies.length - 1; i >= 0; i--) {
-            const z = zombies[i];
-            if (z.dead) { zombies.splice(i, 1); continue; }
-            let blocked = false;
-            for (let p of plants) {
-                if (p.row === z.row && Math.abs(p.x - z.x) < 40) {
-                    blocked = true; p.hp -= 50 * dt;
-                    if (p.hp <= 0) { p.el.remove(); p.cell.content = null; plants = plants.filter(pl => pl !== p); }
-                    break;
-                }
-            }
-            if (!blocked) {
-                z.x -= z.speed * dt; z.el.style.left = z.x + 'px';
-                if (z.x < 0) {
-                    const hasMower = mowers.find(m => m.row === z.row && m.active);
-                    if (!hasMower) { z.dead = true; z.el.remove(); lives--; updateHUD(); if (lives <= 0) gameOver(); }
-                }
-            }
-        }
-        
-        for (let p of plants) {
-            p.cooldown -= dt;
-            if (p.cooldown <= 0) {
-                const t = zombies.find(z => z.row === p.row && z.pinyin === p.pinyin && !z.dead && z.x > 0);
-                if (t) {
-                    const el = document.createElement('div'); el.className = 'bullet'; el.style.left = p.x + 'px'; el.style.top = p.y + 'px'; lawn.appendChild(el);
-                    bullets.push({ x: p.x, y: p.y, target: t, speed: 400, damage: 100, el, owner: p });
-                    p.cooldown = 0.6;
-                }
-            }
-        }
-        
-        for (let i = bullets.length - 1; i >= 0; i--) {
-            const b = bullets[i], t = b.target;
-            if (!t || t.dead) { b.el.remove(); bullets.splice(i, 1); continue; }
-            const dx = t.x - b.x, dist = Math.abs(dx), step = b.speed * dt;
-            if (dist <= step + 10) {
-                t.hp -= b.damage; t.el.querySelector('.z-hp-bar').style.width = Math.max(0, t.hp / t.maxHp * 100) + '%';
-                if (t.hp <= 0) {
-                    if (t.isDouble && t.phase === 1) { 
-                        t.phase = 2;
-                        t.pinyin = addToneMark(t.w2.p, t.w2.t);
-                        t.charEl.textContent = t.w2.c;
-                        t.toneEl.textContent = {1:'ˉ',2:'ˊ',3:'ˇ',4:'ˋ'}[t.w2.t] || '';
-                        t.maxHp = t.maxHp / 2; t.hp = t.maxHp;
-                        t.el.querySelector('.z-hp-bar').style.width = '100%';
-                    } else {
-                        t.dead = true; t.el.classList.add('die'); setTimeout(() => t.el.remove(), 400); score += 20; updateHUD();
-                        if (b.owner) { b.owner.killCount++; if (b.owner.killCount >= 1) { const pCell = b.owner.cell; b.owner.el.remove(); if (pCell) pCell.content = null; plants = plants.filter(pl => pl !== b.owner); } }
-                    }
-                }
-                b.el.remove(); bullets.splice(i, 1);
-            } else { b.x += Math.sign(dx) * step; b.el.style.left = b.x + 'px'; }
-        }
-    }
-
-    function updateHUD() { document.getElementById('lives').textContent = lives; document.getElementById('score').textContent = score; }
-    let toastTimer = null;
-    function showToast(msg) { toastEl.textContent = msg; toastEl.className = 'show'; clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.className = '', 2000); }
-    function gameOver() {
-        running = false; document.getElementById('over-title').textContent = "僵尸吃掉了你的脑子！"; document.getElementById('over-title').style.color = "#ff6b6b";
-        document.getElementById('final-score').textContent = score; document.getElementById('overlay').classList.add('show'); document.getElementById('btn-next-level').style.display = 'none';
-    }
-
-    function loop(time) {
-        if (!running) return;
-        if (!lastTime) lastTime = time;
-        const dt = Math.min((time - lastTime) / 1000, 0.05); lastTime = time;
-        update(dt); requestAnimationFrame(loop);
-    }
-
-    window.nextLevel = function() {
-        levelIndex++; currentLevel = LEVELS[levelIndex];
-        document.getElementById('overlay').classList.remove('show');
-        resetGame(false);
-    };
-
-    window.resetGame = function(fullReset = false) {
-        lawn.querySelectorAll('.zombie,.plant-box,.bullet').forEach(el => el.remove());
-        zombies = []; plants = []; bullets = []; lives = 5; score = 0; running = true; lastTime = 0;
-        currentWave = 0; waveState = 'waiting'; laneProtectWaves = [0,0,0,0,0];
-        hugeWaveText.style.display = 'none'; window.pendingPlant = null; selections = []; updateStage();
-        
-        document.getElementById('tabs').style.display = currentLevel.isConveyor ? 'none' : 'flex';
-        cardsBox.style.display = currentLevel.isConveyor ? 'none' : 'flex';
-        document.getElementById('conveyor-mode').style.display = currentLevel.isConveyor ? 'flex' : 'none';
-        if (currentLevel.isConveyor) { document.querySelectorAll('.belt-row').forEach(r => r.innerHTML = ''); beltTimers = { sm: 0, ym: 0, whole: 0 }; }
-        
-        if (fullReset) {
-            levelIndex = 0; currentLevel = LEVELS[levelIndex];
-            document.getElementById('start-screen').classList.remove('hide'); document.getElementById('game').style.display = 'none'; return;
-        }
-        initGrid(); renderCards(); updateHUD(); document.getElementById('overlay').classList.remove('show');
-        waveHud.textContent = `${currentLevel.name} | 准备中`;
-        setTimeout(() => { if (running) spawnWave(); }, WAVE_CONFIG.firstWaveDelayMs);
-        requestAnimationFrame(loop);
-    };
-</script>
-</body>
-</html>
+        let basePy = smStr + ymStr;
+        if (['j','q','x'].includes(smStr) && ymStr.startsWith('ü')) basePy = smStr + 'u' + ymStr.slice(1);
+        else if (smStr === 'y' && ymStr === 'ü') basePy = 'yu';
+        else if (smStr === 'y' && ymStr.startsWith('ü')) bas
