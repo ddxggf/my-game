@@ -42,13 +42,19 @@ body{width:100vw;height:100vh;background:#2b1b10;overflow:hidden;font-family:san
 .z-hp{width:44px;height:4px;background:#000;border-radius:2px;margin-top:2px;overflow:hidden}
 .z-hp-bar{height:100%;background:#ff4b4b;width:100%}
 .bullet{position:absolute;width:12px;height:12px;border-radius:50%;z-index:8;background:#b8f57a;box-shadow:0 0 8px #b8f57a;transform:translate(-50%,-50%)}
-#tone-modal,#overlay{position:absolute;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:200}
-#tone-modal.show,#overlay.show{display:flex}
-.modal-box{background:#fff;padding:20px;border-radius:12px;text-align:center;width:260px}
+#tone-modal,#overlay,#start-screen{position:absolute;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:200;flex-direction:column;color:#fff}
+#tone-modal.show,#overlay.show,#start-screen.show{display:flex}
+.modal-box{background:#fff;padding:20px;border-radius:12px;text-align:center;width:260px;color:#333}
 #tone-base{font-size:30px;font-weight:900;color:#e74c3c;margin-bottom:15px}
 .tone-btns button{display:block;width:100%;padding:10px;margin-bottom:8px;font-size:16px;font-weight:bold;border-radius:8px;border:2px solid #ccc;background:#f9f9f9;cursor:pointer}
 #toast{position:absolute;left:50%;bottom:20px;transform:translate(-50%,10px);background:rgba(0,0,0,0.9);color:#fff;padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:0.3s;z-index:300;white-space:nowrap}
 #toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* 开始界面专属样式 */
+#start-screen h1{font-size:28px;margin-bottom:10px;color:#ffe680;text-align:center}
+#start-screen p{font-size:16px;color:#aaa;margin-bottom:30px}
+#btn-start{padding:15px 40px;font-size:20px;font-weight:bold;background:#ff9800;color:#fff;border:none;border-radius:30px;box-shadow:0 5px 0 #e65100;cursor:pointer}
+#btn-start:active{transform:translateY(4px);box-shadow:0 1px 0 #e65100}
 </style>
 </head>
 <body>
@@ -67,9 +73,16 @@ body{width:100vw;height:100vh;background:#2b1b10;overflow:hidden;font-family:san
     <div id="toast"></div>
 </div>
 
-<!-- 引入刚才保存的 noodles.js -->
+<!-- 这就是您要的开始界面 -->
+<div id="start-screen" class="show">
+    <h1>植物大战僵尸</h1>
+    <p>📱 建议横屏游玩效果更佳</p>
+    <button id="btn-start">开始游戏</button>
+</div>
+
 <script src="noodles.js"></script>
 <script>
+// 核心逻辑，依赖 noodles.js 的变量
 function addToneMark(py, tone) {
     if (tone === 0) return py;
     const marks = {1:{a:'ā',o:'ō',e:'ē',i:'ī',u:'ū','ü':'ǖ'},2:{a:'á',o:'ó',e:'é',i:'í',u:'ú','ü':'ǘ'},3:{a:'ǎ',o:'ǒ',e:'ě',i:'ǐ',u:'ǔ','ü':'ǚ'},4:{a:'à',o:'ò',e:'è',i:'ì',u:'ù','ü':'ǜ'}}[tone];
@@ -93,6 +106,12 @@ const toastEl = document.getElementById('toast');
 let cells = [], cards = [], selections = [], pendingPlant = null, isShovel = false;
 let zombies = [], plants = [], bullets = [];
 let lives = 5, score = 0, running = false, lastTime = 0, spawnTimer = 2, gameTime = 0;
+
+// 点击开始按钮
+document.getElementById('btn-start').onclick = () => {
+    document.getElementById('start-screen').classList.remove('show');
+    resetGame();
+};
 
 function initGrid() {
     cells = [];
@@ -323,7 +342,6 @@ window.resetGame = function() {
     clearStage(); isShovel = false; document.getElementById('btn-shovel').classList.remove('active'); lawn.classList.remove('can-shovel');
     initGrid(); cards = []; renderCards(); updateHUD(); document.getElementById('overlay').classList.remove('show'); requestAnimationFrame(loop);
 };
-resetGame();
 </script>
 </body>
 </html>
