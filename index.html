@@ -3,31 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>植物大战僵尸 · 合成建模版</title>
+    <title>植物大战僵尸 · 拼读版</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { width: 100vw; height: 100vh; background-color: #2b1b10; overflow: hidden; font-family: "Microsoft YaHei", sans-serif; position: fixed; }
         #game { width: 100%; height: 100%; background-color: #4a7a2f; display: flex; flex-direction: column; }
         
-        /* 顶部卡片栏 */
-        #top-bar { height: 85px; background-color: #7a4b22; border-bottom: 4px solid #5c3a21; display: flex; align-items: center; z-index: 20; flex-shrink: 0; }
-        #cards-wrapper { flex: 1; height: 100%; display: flex; overflow-x: auto; padding: 0 5px; gap: 6px; align-items: center; }
+        /* 顶部卡片区 */
+        #top-bar { height: 110px; background-color: #7a4b22; border-bottom: 4px solid #5c3a21; display: flex; flex-direction: column; z-index: 20; flex-shrink: 0; }
+        
+        /* 三个分类按钮 */
+        #tabs { display: flex; height: 35px; background-color: #5c3a21; }
+        .tab-btn { flex: 1; background: none; border: none; color: #aaa; font-weight: bold; font-size: 14px; cursor: pointer; border-bottom: 3px solid transparent; }
+        .tab-btn.active { color: #ffe680; border-bottom-color: #ffe680; background-color: #7a4b22; }
+
+        /* 卡片列表 */
+        #cards-wrapper { flex: 1; display: flex; overflow-x: auto; padding: 8px 10px; gap: 6px; align-items: center; }
         #cards-wrapper::-webkit-scrollbar { display: none; }
-        .card { min-width: 50px; height: 68px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.4); flex-shrink: 0; transition: transform 0.1s; }
+        
+        .card { min-width: 45px; height: 55px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.4); flex-shrink: 0; transition: transform 0.1s; }
         .card:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.4); }
         .card.selected { border-color: #ffe680; transform: translateY(-6px) scale(1.1); box-shadow: 0 0 15px #ffe680; z-index: 30; }
         .card .text { font-weight: 900; color: #fff; text-shadow: 1px 1px 2px #000; font-size: 16px; }
+        
         .card.sm { background: linear-gradient(135deg, #4facfe, #00f2fe); }
         .card.ym { background: linear-gradient(135deg, #fa709a, #fee140); }
         .card.whole { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
         
-        #tools { display: flex; padding: 0 10px; gap: 8px; }
-        .tool-btn { width: 42px; height: 42px; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.6); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #fff; cursor: pointer; }
+        #tools { display: flex; padding: 0 10px; gap: 8px; position: absolute; right: 0; top: 35px; height: 75px; align-items: center; background: linear-gradient(90deg, transparent, #7a4b22 20%); padding-left: 20px; }
+        .tool-btn { width: 40px; height: 40px; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.6); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; cursor: pointer; }
         .tool-btn.active { background-color: rgba(255,100,100,0.8); border-color: #ff6b6b; }
 
         /* 5x9 草坪网格 */
         #lawn { position: relative; flex: 1; background-color: #5b8c3e; background-image: linear-gradient(to right, rgba(0,0,0,0.15) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.15) 1px, transparent 1px); background-size: 11.111% 20%; overflow: hidden; }
-        #lawn.can-plant { box-shadow: inset 0 0 30px rgba(255,230,128,0.8); }
         #lawn.can-shovel { box-shadow: inset 0 0 30px rgba(255,100,100,0.8); }
 
         #hud { position: absolute; top: 8px; left: 8px; color: #fff; font-weight: bold; font-size: 15px; z-index: 15; text-shadow: 0 1px 3px #000; display: flex; gap: 15px; pointer-events: none; }
@@ -52,13 +60,12 @@
         .p-head-full { position: absolute; bottom: 25px; left: 2px; width: 36px; height: 36px; background-color: #2ecc71; border: 2px solid #27ae60; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
         .p-head-full::after { content: ''; width: 14px; height: 14px; background-color: #145a32; border-radius: 50%; box-shadow: inset 0 2px 4px rgba(0,0,0,0.8); }
 
-        /* 僵尸 */
+        /* 僵尸 (只显示汉字) */
         .zombie { position: absolute; width: 60px; height: 100px; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; transform: translate(-50%, -50%); }
         .zombie.die { animation: dieAnim 0.4s forwards; }
         @keyframes dieAnim { to { opacity: 0; transform: translate(-50%, -80%) rotate(-30deg); } }
-        .z-head { background-color: rgba(20,20,20,0.9); border-radius: 6px; padding: 2px 6px; text-align: center; margin-bottom: 2px; border: 2px solid rgba(255,255,255,0.5); }
-        .z-char { font-size: 18px; font-weight: 900; color: #fff; }
-        .z-pinyin { font-size: 12px; color: #ffd700; font-weight: bold; }
+        .z-head { background-color: rgba(20,20,20,0.9); border-radius: 6px; padding: 4px 10px; text-align: center; margin-bottom: 2px; border: 2px solid rgba(255,255,255,0.5); }
+        .z-char { font-size: 22px; font-weight: 900; color: #fff; }
         .z-body { font-size: 36px; line-height: 1; }
         .z-hp { width: 40px; height: 4px; background-color: #000; border-radius: 2px; margin-top: 2px; overflow: hidden; }
         .z-hp-bar { height: 100%; background-color: #ff4b4b; width: 100%; }
@@ -82,22 +89,30 @@
 
 <div id="game">
     <div id="top-bar">
+        <div id="tabs">
+            <button class="tab-btn active" onclick="switchTab('sm')">声母表</button>
+            <button class="tab-btn" onclick="switchTab('ym')">韵母表</button>
+            <button class="tab-btn" onclick="switchTab('whole')">整体认读</button>
+        </div>
         <div id="cards-wrapper"></div>
         <div id="tools">
             <div class="tool-btn" id="btn-shovel">🪏</div>
             <div class="tool-btn" id="btn-fullscreen">⛶</div>
         </div>
     </div>
+    
     <div id="lawn">
         <div id="hud"><span>❤️ <span id="lives">5</span></span><span>🏆 <span id="score">0</span></span></div>
     </div>
+    
     <div id="tone-modal"><div class="modal-box"><h3>合成成功！请选声调</h3><div id="tone-base"></div><div class="tone-btns" id="tone-btns"></div></div></div>
     <div id="overlay"><div class="modal-box"><h2 style="color: #ff6b6b; margin-bottom: 10px;">僵尸吃掉了你的脑子！</h2><p style="margin-bottom: 15px;">得分：<span id="final-score">0</span></p><button onclick="resetGame()" style="padding: 10px 20px; background-color: #388e3c; color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer;">再来一局</button></div></div>
     <div id="toast"></div>
 </div>
+
 <div id="start-screen" class="show">
     <h1>植物大战僵尸</h1>
-    <p>📱 建议点击右上角全屏（⛶）<br>5行9列 · 组装豌豆射手</p>
+    <p>📱 建议点击右上角全屏（⛶）<br>僵尸现在只有汉字，请根据汉字拼出拼音！</p>
     <button id="btn-start">开始游戏</button>
 </div>
 
@@ -105,6 +120,7 @@
 <script src="nodes.js"></script>
 
 <script>
+    // ==== 拼音声调标注 ====
     function addToneMark(py, tone) {
         if (tone === 0) return py;
         const marks = {1:{a:'ā',o:'ō',e:'ē',i:'ī',u:'ū','ü':'ǖ'},2:{a:'á',o:'ó',e:'é',i:'í',u:'ú','ü':'ǘ'},3:{a:'ǎ',o:'ǒ',e:'ě',i:'ǐ',u:'ǔ','ü':'ǚ'},4:{a:'à',o:'ò',e:'è',i:'ì',u:'ù','ü':'ǜ'}}[tone];
@@ -123,16 +139,52 @@
     const cardsBox = document.getElementById('cards-wrapper');
     const toastEl = document.getElementById('toast');
     
-    let cells = [], cards = [], selectedCard = null, isShovel = false;
+    let cells = [], selectedCard = null, isShovel = false;
     let zombies = [], plants = [], bullets = [];
     let lives = 5, score = 0, running = false, lastTime = 0, spawnTimer = 2, gameTime = 0;
+    let currentTab = 'sm'; // 默认显示声母表
 
     document.getElementById('btn-start').onclick = () => { document.getElementById('start-screen').classList.remove('show'); resetGame(); };
     document.getElementById('btn-fullscreen').onclick = () => {
-        if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => showToast('不支持全屏'));
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => alert('不支持全屏'));
         else document.exitFullscreen();
     };
 
+    // ==== 切换分类卡片 ====
+    function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
+        renderCards();
+    }
+
+    function renderCards() {
+        cardsBox.innerHTML = '';
+        let list = [];
+        if (currentTab === 'sm') list = INITIALS;
+        else if (currentTab === 'ym') list = FINALS;
+        else list = WHOLE_SYLLABLES;
+
+        list.forEach(text => {
+            const type = currentTab;
+            const el = document.createElement('div');
+            el.className = 'card ' + type;
+            if (selectedCard && selectedCard.text === text && selectedCard.type === type) el.classList.add('selected');
+            el.innerHTML = `<div class="text" style="font-size: ${text.length > 2 ? '12px' : '16px'}">${text}</div>`;
+            el.onclick = () => { 
+                if (isShovel) return; 
+                if (selectedCard && selectedCard.text === text && selectedCard.type === type) {
+                    selectedCard = null;
+                } else {
+                    selectedCard = { type, text };
+                }
+                renderCards(); 
+            };
+            cardsBox.appendChild(el);
+        });
+    }
+
+    // ==== 5x9 网格初始化 ====
     function initGrid() {
         cells = [];
         const w = lawn.clientWidth / 9, h = lawn.clientHeight / 5;
@@ -150,58 +202,7 @@
     }
     window.addEventListener('resize', initGrid);
 
-    function generateDeck() {
-        let newCards = [];
-        let neededSm = [], neededYm = [], neededWhole = [];
-
-        zombies.forEach(z => {
-            if (z.whole) neededWhole.push(z.whole);
-            else {
-                let s = z.sm;
-                if (s === 'zh' || s === 'ch' || s === 'sh') neededSm.push(s[0], 'h');
-                else if (s) neededSm.push(s);
-                if (z.ym) neededYm.push(z.ym);
-            }
-        });
-
-        neededSm = [...new Set(neededSm)];
-        neededYm = [...new Set(neededYm)];
-        neededWhole = [...new Set(neededWhole)];
-
-        neededWhole.forEach(w => newCards.push({ type: 'whole', text: w }));
-        neededSm.forEach(s => newCards.push({ type: 'sm', text: s }));
-        neededYm.forEach(y => newCards.push({ type: 'ym', text: y }));
-
-        while (newCards.length < 12) {
-            const r = Math.random();
-            if (r < 0.45) {
-                let s = INITIALS[Math.floor(Math.random() * INITIALS.length)];
-                if (s === 'zh' || s === 'ch' || s === 'sh') s = s[0];
-                newCards.push({ type: 'sm', text: s });
-            } else if (r < 0.85) {
-                newCards.push({ type: 'ym', text: FINALS[Math.floor(Math.random() * FINALS.length)] });
-            } else {
-                newCards.push({ type: 'whole', text: WHOLE_SYLLABLES[Math.floor(Math.random() * WHOLE_SYLLABLES.length)] });
-            }
-        }
-
-        const typeOrder = { sm: 1, ym: 2, whole: 3 };
-        newCards.sort((a, b) => typeOrder[a.type] - typeOrder[b.type]);
-        cards = newCards;
-    }
-
-    function renderCards() {
-        cardsBox.innerHTML = '';
-        cards.forEach(card => {
-            const el = document.createElement('div');
-            el.className = 'card ' + card.type;
-            if (card === selectedCard) el.classList.add('selected');
-            el.innerHTML = `<div class="text" style="font-size: ${card.text.length > 2 ? '12px' : '16px'}">${card.text}</div>`;
-            el.onclick = () => { if (isShovel) return; selectedCard = (selectedCard === card) ? null : card; renderCards(); };
-            cardsBox.appendChild(el);
-        });
-    }
-
+    // ==== 植物 DOM 生成 ====
     function createPlantDOM(type, text) {
         const el = document.createElement('div');
         el.className = 'plant-box';
@@ -210,6 +211,7 @@
         return el;
     }
 
+    // ==== 草坪点击与合成 ====
     lawn.addEventListener('click', (e) => {
         if (!running) return;
         const rect = lawn.getBoundingClientRect();
@@ -217,6 +219,7 @@
         const cell = cells.find(c => cx >= c.cx - c.w / 2 && cx <= c.cx + c.w / 2 && cy >= c.cy - c.h / 2 && cy <= c.cy + c.h / 2);
         if (!cell) return;
 
+        // 铲除模式
         if (isShovel) {
             if (cell.content) {
                 if (cell.content.type === 'full') plants = plants.filter(p => p.el !== cell.content.el);
@@ -226,25 +229,34 @@
             toggleShovel(); return;
         }
 
+        // 没选卡片
         if (!selectedCard) { showToast('请先在上方选择卡片！'); return; }
         if (cell.content && cell.content.type === 'full') { showToast('这里已经有成品植物了！'); return; }
 
+        // 种下半成品
         if (!cell.content) {
+            // 如果是整体认读，直接弹声调
+            if (selectedCard.type === 'whole') {
+                showToneModal(selectedCard.text, cell, true);
+                return;
+            }
             const el = createPlantDOM(selectedCard.type, selectedCard.text);
             el.style.left = cell.cx + 'px'; el.style.top = cell.cy + 'px';
             lawn.appendChild(el);
             cell.content = { type: selectedCard.type, text: selectedCard.text, el };
-            selectedCard = null; generateDeck(); renderCards();
+            selectedCard = null; renderCards();
             showToast('种下半成品，找另一半来合成吧！');
             return;
         }
 
+        // 已有半成品，尝试合成
         const existing = cell.content;
         let newType = selectedCard.type;
         let newText = selectedCard.text;
         let smStr = existing.type === 'sm' ? existing.text : newText;
         let ymStr = existing.type === 'ym' ? existing.text : newText;
 
+        // 如果两个都是声母，尝试组合（如 s + h = sh）
         if (existing.type === 'sm' && selectedCard.type === 'sm') {
             if (['z','c','s'].includes(existing.text) && selectedCard.text === 'h') {
                 smStr = existing.text + 'h'; ymStr = '';
@@ -264,21 +276,26 @@
         else if (smStr === 'y' && ymStr === 'u') basePy = 'yu';
         else if (smStr === 'w' && ymStr === 'u') basePy = 'wu';
 
+        // 如果只拼出了双字母声母，先更新半成品
         if (!ymStr) {
             existing.text = smStr;
             existing.el.querySelector('.p-label').textContent = smStr;
-            selectedCard = null; generateDeck(); renderCards();
+            selectedCard = null; renderCards();
             showToast(`合成声母「${smStr}」！`);
             return;
         }
 
+        // 完全合法
         if (VALID_PINYINS.has(basePy)) {
             selectedCard = null;
-            showToneModal(basePy, cell);
-        } else { showToast(`❌ 不支持这种拼法 (${basePy})`); }
+            showToneModal(basePy, cell, false);
+        } else { 
+            showToast(`❌ 不支持这种拼法 (${basePy})`); 
+        }
     });
 
-    function showToneModal(base, cell) {
+    // ==== 声调弹窗 ====
+    function showToneModal(base, cell, isDirectWhole) {
         const modal = document.getElementById('tone-modal');
         document.getElementById('tone-base').textContent = base;
         const box = document.getElementById('tone-btns'); box.innerHTML = '';
@@ -288,7 +305,10 @@
             btn.onclick = () => {
                 modal.classList.remove('show');
                 const finalPy = addToneMark(base, t);
-                cell.content.el.remove();
+                
+                if (!isDirectWhole) {
+                    cell.content.el.remove(); // 移除半成品
+                }
                 
                 const el = createPlantDOM('full', finalPy);
                 el.style.left = cell.cx + 'px'; el.style.top = cell.cy + 'px';
@@ -298,8 +318,9 @@
                 cell.content = { type: 'full', pinyin: finalPy, el, plantObj };
                 plants.push(plantObj);
                 
-                generateDeck(); renderCards();
-                showToast(`✨ 豌豆射手组装完成！攻击拼音：${finalPy}`);
+                if (isDirectWhole) selectedCard = null;
+                renderCards();
+                showToast(`✨ 组装完成！攻击拼音：${finalPy}`);
             };
             box.appendChild(btn);
         });
@@ -317,21 +338,22 @@
     }
     document.getElementById('btn-shovel').onclick = toggleShovel;
 
+    // ==== 僵尸生成与战斗 ====
     function spawnZombie() {
         const word = WORDS[Math.floor(Math.random() * WORDS.length)];
-        const py = addToneMark(word.p, word.t);
+        const py = addToneMark(word.p, word.t); // 内部保留带调拼音用于匹配
         const row = Math.floor(Math.random() * 5);
         const cell = cells.find(c => c.row === row);
         if (!cell) return;
         
         const el = document.createElement('div');
         el.className = 'zombie';
-        el.innerHTML = `<div class="z-head"><div class="z-char">${word.c}</div><div class="z-pinyin">${py}</div></div><div class="z-body">🧟</div><div class="z-hp"><div class="z-hp-bar"></div></div>`;
+        // 注意这里：只显示汉字 word.c，去掉了拼音提示
+        el.innerHTML = `<div class="z-head"><div class="z-char">${word.c}</div></div><div class="z-body">🧟</div><div class="z-hp"><div class="z-hp-bar"></div></div>`;
         let x = lawn.clientWidth + 40;
         el.style.left = x + 'px'; el.style.top = cell.cy + 'px'; lawn.appendChild(el);
         
         zombies.push({ row, x, y: cell.cy, hp: 100, maxHp: 100, speed: Math.max(12, 25 - gameTime * 0.5), pinyin: py, sm: word.s, ym: word.y, whole: word.w, el, dead: false });
-        generateDeck(); renderCards();
     }
 
     function update(dt) {
@@ -354,6 +376,7 @@
         for (let p of plants) {
             p.cooldown -= dt;
             if (p.cooldown <= 0) {
+                // 匹配拼音
                 const t = zombies.find(z => z.row === p.row && z.pinyin === p.pinyin && !z.dead && z.x > 0);
                 if (t) {
                     const el = document.createElement('div');
@@ -393,7 +416,7 @@
         lawn.querySelectorAll('.zombie, .plant-box, .bullet').forEach(el => el.remove());
         zombies = []; plants = []; bullets = []; lives = 5; score = 0; running = true; gameTime = 0; spawnTimer = 2; lastTime = 0;
         selectedCard = null; isShovel = false; document.getElementById('btn-shovel').classList.remove('active'); lawn.classList.remove('can-shovel');
-        initGrid(); generateDeck(); renderCards(); updateHUD();
+        initGrid(); switchTab('sm'); updateHUD();
         document.getElementById('overlay').classList.remove('show'); requestAnimationFrame(loop);
     };
 </script>
