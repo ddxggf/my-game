@@ -8,35 +8,43 @@
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { width: 100vw; height: 100vh; background-color: #2b1b10; overflow: hidden; font-family: "Microsoft YaHei", sans-serif; position: fixed; }
 
-        /* === 游戏主容器（默认隐藏） === */
+        /* === 游戏主容器 === */
         #game { width: 100%; height: 100%; background-color: #4a7a2f; display: none; flex-direction: column; }
         
-        /* 顶部卡片区 */
-        #top-bar { height: 110px; background-color: #7a4b22; border-bottom: 4px solid #5c3a21; display: flex; flex-direction: column; z-index: 20; flex-shrink: 0; }
+        /* 顶部卡片区（改为平铺换行，方便找） */
+        #top-bar { min-height: 160px; background-color: #7a4b22; border-bottom: 4px solid #5c3a21; display: flex; flex-direction: column; z-index: 20; flex-shrink: 0; }
         
-        /* 三个分类按钮 */
-        #tabs { display: flex; height: 35px; background-color: #5c3a21; }
+        /* 分类按钮 */
+        #tabs { display: flex; height: 35px; background-color: #5c3a21; flex-shrink: 0; }
         .tab-btn { flex: 1; background: none; border: none; color: #aaa; font-weight: bold; font-size: 14px; cursor: pointer; border-bottom: 3px solid transparent; }
         .tab-btn.active { color: #ffe680; border-bottom-color: #ffe680; background-color: #7a4b22; }
 
-        /* 卡片列表 */
-        #cards-wrapper { flex: 1; display: flex; overflow-x: auto; padding: 8px 10px; gap: 6px; align-items: center; }
-        #cards-wrapper::-webkit-scrollbar { display: none; }
+        /* 卡片列表（平铺展示） */
+        #cards-wrapper { flex: 1; display: flex; flex-wrap: wrap; overflow-y: auto; padding: 8px 10px; gap: 6px; align-items: center; align-content: flex-start; }
+        #cards-wrapper::-webkit-scrollbar { width: 4px; }
+        #cards-wrapper::-webkit-scrollbar-thumb { background: #5c3a21; }
+
+        /* 分类小标题（如：前鼻韵母） */
+        .group-title { width: 100%; font-size: 12px; color: #ffe680; font-weight: bold; margin-top: 4px; margin-bottom: 2px; }
         
-        .card { min-width: 45px; height: 55px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.4); flex-shrink: 0; transition: transform 0.1s; }
-        .card:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.4); }
-        .card.selected { border-color: #ffe680; transform: translateY(-6px) scale(1.1); box-shadow: 0 0 15px #ffe680; z-index: 30; }
+        .card { min-width: 45px; height: 50px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,0.4); flex-shrink: 0; transition: transform 0.1s; }
+        .card:active { transform: translateY(2px); box-shadow: 0 0px 0 rgba(0,0,0,0.4); }
+        .card.selected { border-color: #ffe680; transform: translateY(-4px) scale(1.1); box-shadow: 0 0 15px #ffe680; z-index: 30; }
         .card .text { font-weight: 900; color: #fff; text-shadow: 1px 1px 2px #000; font-size: 16px; }
         
-        .card.sm { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-        .card.ym { background: linear-gradient(135deg, #fa709a, #fee140); }
-        .card.whole { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
-        
-        #tools { display: flex; padding: 0 10px; gap: 8px; position: absolute; right: 0; top: 35px; height: 75px; align-items: center; background: linear-gradient(90deg, transparent, #7a4b22 20%); padding-left: 20px; }
+        /* 颜色分类体系 */
+        .card.sm { background: linear-gradient(135deg, #4facfe, #00f2fe); } /* 蓝色声母 */
+        .card.ym-single { background: linear-gradient(135deg, #f6d365, #fda085); } /* 黄色单韵母 */
+        .card.ym-double { background: linear-gradient(135deg, #fa709a, #fee140); } /* 粉色复韵母 */
+        .card.ym-front { background: linear-gradient(135deg, #11998e, #38ef7d); } /* 绿色前鼻韵母 (如 an) */
+        .card.ym-back { background: linear-gradient(135deg, #00b4db, #0083b0); } /* 深蓝后鼻韵母 */
+        .card.whole { background: linear-gradient(135deg, #a18cd1, #fbc2eb); } /* 紫色整体认读 */
+
+        #tools { display: flex; padding: 0 10px; gap: 8px; position: absolute; right: 0; top: 35px; height: 125px; align-items: center; background: linear-gradient(90deg, transparent, #7a4b22 20%); padding-left: 20px; z-index: 25; }
         .tool-btn { width: 40px; height: 40px; background-color: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.6); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; cursor: pointer; }
         .tool-btn.active { background-color: rgba(255,100,100,0.8); border-color: #ff6b6b; }
 
-        /* 5x9 草坪网格 */
+        /* 草坪网格 */
         #lawn { position: relative; flex: 1; background-color: #5b8c3e; background-image: linear-gradient(to right, rgba(0,0,0,0.15) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.15) 1px, transparent 1px); background-size: 11.111% 20%; overflow: hidden; }
         #lawn.can-shovel { box-shadow: inset 0 0 30px rgba(255,100,100,0.8); }
 
@@ -45,7 +53,7 @@
         #toast { position: absolute; left: 50%; bottom: 20px; transform: translate(-50%, 10px); background-color: rgba(0,0,0,0.9); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 14px; opacity: 0; transition: 0.3s; z-index: 300; white-space: nowrap; }
         #toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-        /* 🌟 炮台建模 🌟 */
+        /* 炮台建模 */
         .plant-box { position: absolute; width: 60px; height: 75px; z-index: 5; transform: translate(-50%, -50%); pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
         .p-label-wrap { display: flex; align-items: center; gap: 2px; margin-bottom: 5px; z-index: 2; }
         .p-label { background-color: rgba(0,0,0,0.85); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-weight: 900; white-space: nowrap; border: 1px solid rgba(255,255,255,0.5); }
@@ -59,6 +67,7 @@
         .p-head-sm { position: absolute; bottom: 22px; left: 10px; width: 20px; height: 22px; background: #3498db; border: 2px solid #2980b9; border-radius: 10px 10px 4px 4px; }
         .p-head-ym { position: absolute; bottom: 22px; left: 8px; width: 24px; height: 24px; background: #f1c40f; border: 2px solid #f39c12; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
         .p-head-ym::after { content: ''; width: 10px; height: 10px; background: #333; border-radius: 50%; }
+        
         .p-head-full { position: absolute; bottom: 22px; left: 5px; width: 30px; height: 30px; background: #2ecc71; border: 2px solid #27ae60; border-radius: 50%; }
         .p-head-full::before { content: ''; position: absolute; right: -14px; top: 6px; width: 16px; height: 16px; background: #2ecc71; border: 2px solid #27ae60; border-radius: 4px 8px 8px 4px; z-index: -1; }
         .p-head-full::after { content: ''; position: absolute; right: -16px; top: 10px; width: 6px; height: 8px; background: #145a32; border-radius: 50%; }
@@ -67,7 +76,6 @@
         .zombie { position: absolute; width: 60px; height: 100px; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; transform: translate(-50%, -50%); }
         .zombie.die { animation: dieAnim 0.4s forwards; }
         @keyframes dieAnim { to { opacity: 0; transform: translate(-50%, -80%) rotate(-30deg); } }
-        
         .z-head { background-color: rgba(20,20,20,0.9); border-radius: 8px; padding: 4px 10px; text-align: center; margin-bottom: 2px; border: 2px solid rgba(255,255,255,0.5); display: flex; flex-direction: column; align-items: center; }
         .z-char { font-size: 22px; font-weight: 900; color: #fff; line-height: 1.1; }
         .z-tone { font-size: 18px; color: #ffd700; font-weight: bold; line-height: 1; margin-top: 2px; }
@@ -84,7 +92,7 @@
         #tone-base { font-size: 30px; font-weight: 900; color: #e74c3c; margin-bottom: 15px; }
         .tone-btns button { display: block; width: 100%; padding: 10px; margin-bottom: 8px; font-size: 16px; font-weight: bold; border-radius: 8px; border: 2px solid #ccc; background-color: #f9f9f9; cursor: pointer; }
 
-        /* 🌟 全新独立游戏主界面 🌟 */
+        /* 主界面 */
         #start-screen {
             position: absolute; inset: 0; z-index: 1000;
             background: linear-gradient(180deg, #4facfe 0%, #00f2fe 40%, #7bdcb5 70%, #2ecc71 100%);
@@ -92,71 +100,36 @@
             transition: opacity 0.5s, transform 0.5s;
         }
         #start-screen.hide { opacity: 0; transform: scale(1.1); pointer-events: none; }
-
-        /* 主界面漂浮的云朵装饰 */
         .cloud { position: absolute; background: rgba(255,255,255,0.8); border-radius: 50px; filter: blur(5px); }
         .c1 { width: 120px; height: 40px; top: 10%; left: 10%; animation: float 8s infinite alternate; }
         .c2 { width: 180px; height: 50px; top: 20%; right: 5%; animation: float 10s infinite alternate-reverse; }
         .c3 { width: 100px; height: 30px; top: 40%; left: 20%; animation: float 6s infinite alternate; }
         @keyframes float { from { transform: translateX(0); } to { transform: translateX(30px); } }
-
-        .title-main {
-            font-size: 56px; font-weight: 900; color: #fff; letter-spacing: 4px;
-            text-shadow: 0 4px 0 #1b5e20, 0 8px 10px rgba(0,0,0,0.3); margin-bottom: 10px;
-            transform: rotate(-3deg); z-index: 2;
-        }
-        .title-sub {
-            font-size: 24px; font-weight: bold; color: #ffeb3b;
-            text-shadow: 0 2px 0 #000; letter-spacing: 2px; margin-bottom: 50px; z-index: 2;
-        }
-
-        .rules-box {
-            background: rgba(0,0,0,0.6); border-radius: 16px; padding: 20px 30px; margin-bottom: 40px;
-            color: #fff; line-height: 1.8; font-size: 16px; z-index: 2; border: 2px solid rgba(255,255,255,0.2);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3); backdrop-filter: blur(5px);
-        }
+        .title-main { font-size: 56px; font-weight: 900; color: #fff; letter-spacing: 4px; text-shadow: 0 4px 0 #1b5e20, 0 8px 10px rgba(0,0,0,0.3); margin-bottom: 10px; transform: rotate(-3deg); z-index: 2; }
+        .title-sub { font-size: 24px; font-weight: bold; color: #ffeb3b; text-shadow: 0 2px 0 #000; letter-spacing: 2px; margin-bottom: 50px; z-index: 2; }
+        .rules-box { background: rgba(0,0,0,0.6); border-radius: 16px; padding: 20px 30px; margin-bottom: 40px; color: #fff; line-height: 1.8; font-size: 16px; z-index: 2; border: 2px solid rgba(255,255,255,0.2); box-shadow: 0 10px 20px rgba(0,0,0,0.3); backdrop-filter: blur(5px); }
         .rules-box span { color: #ffe680; font-weight: bold; }
-
-        #btn-start {
-            padding: 18px 60px; font-size: 24px; font-weight: 900; color: #fff;
-            background: linear-gradient(180deg, #ff9800, #f57c00); border: none; border-radius: 40px;
-            box-shadow: 0 6px 0 #e65100, 0 10px 20px rgba(0,0,0,0.3); cursor: pointer;
-            z-index: 2; transition: transform 0.1s, box-shadow 0.1s; animation: pulse 2s infinite;
-        }
+        #btn-start { padding: 18px 60px; font-size: 24px; font-weight: 900; color: #fff; background: linear-gradient(180deg, #ff9800, #f57c00); border: none; border-radius: 40px; box-shadow: 0 6px 0 #e65100, 0 10px 20px rgba(0,0,0,0.3); cursor: pointer; z-index: 2; transition: transform 0.1s, box-shadow 0.1s; animation: pulse 2s infinite; }
         #btn-start:active { transform: translateY(6px); box-shadow: 0 0px 0 #e65100, 0 2px 10px rgba(0,0,0,0.3); animation: none; }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        
-        /* 底部装饰草丛 */
-        .grass-deco {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 80px;
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0,20 L0,10 Q10,0 20,10 T40,10 T60,10 T80,10 T100,10 L100,20 Z" fill="%23388e3c"/></svg>') repeat-x;
-            background-size: 200px 80px;
-        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .grass-deco { position: absolute; bottom: 0; left: 0; width: 100%; height: 80px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0,20 L0,10 Q10,0 20,10 T40,10 T60,10 T80,10 T100,10 L100,20 Z" fill="%23388e3c"/></svg>') repeat-x; background-size: 200px 80px; }
     </style>
 </head>
 <body>
 
-<!-- 主界面（默认显示） -->
+<!-- 主界面 -->
 <div id="start-screen">
     <div class="cloud c1"></div>
     <div class="cloud c2"></div>
     <div class="cloud c3"></div>
-    
     <div class="title-main">植物大战僵尸</div>
     <div class="title-sub">拼 音 拼 读 版</div>
-    
     <div class="rules-box">
         🌻 根据僵尸头顶的<span>汉字+声调</span>，拼出正确拼音！<br>
         🛠️ 声母出<span>蓝色炮管</span>，韵母出<span>黄色接口</span>。<br>
-        🌱 组装成完全体豌豆射手，必须<span>拼音与声调完全一致</span>才能开火。<br>
-        ⚠️ 同拼音炮台最多<span>2个</span>，每个炮台击杀<span>3只</span>僵尸后自动报废！
+        🌱 组装成完全体，必须<span>拼音与声调完全一致</span>才能开火。<br>
+        ⚠️ 同拼音炮台最多<span>2个</span>，击杀<span>1只</span>僵尸后自动报废！
     </div>
-
     <button id="btn-start">开始游戏</button>
     <div class="grass-deco"></div>
 </div>
@@ -169,6 +142,7 @@
             <button class="tab-btn" onclick="switchTab('ym')">韵母表</button>
             <button class="tab-btn" onclick="switchTab('whole')">整体认读</button>
         </div>
+        <!-- 用 flex-wrap 替代滑动，方便直接看全部 -->
         <div id="cards-wrapper"></div>
         <div id="tools">
             <div class="tool-btn" id="btn-shovel">🪏</div>
@@ -208,23 +182,27 @@
     
     let cells = [], selectedCard = null, isShovel = false;
     let zombies = [], plants = [], bullets = [];
-    let lives = 5, score = 0, running = false, lastTime = 0, spawnTimer = 5, gameTime = 0;
+    let lives = 5, score = 0, running = false, lastTime = 0, spawnTimer = 8, gameTime = 0;
     let currentTab = 'sm';
 
-    // 点击开始按钮
     document.getElementById('btn-start').onclick = () => {
         document.getElementById('start-screen').classList.add('hide');
         document.getElementById('game').style.display = 'flex';
-        // 必须等界面显示出来后再初始化网格，否则获取不到宽度
-        setTimeout(() => {
-            resetGame();
-        }, 50);
+        setTimeout(() => { resetGame(); }, 50);
     };
 
     document.getElementById('btn-fullscreen').onclick = () => {
         if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => alert('不支持全屏'));
         else document.exitFullscreen();
     };
+
+    // 韵母分类表（方便平铺展示）
+    const FINAL_GROUPS = [
+        { title: '单韵母', items: ['a','o','e','i','u','ü'], cls: 'ym-single' },
+        { title: '复韵母', items: ['ai','ei','ui','ao','ou','iu','ie','üe','er'], cls: 'ym-double' },
+        { title: '前鼻韵母', items: ['an','en','in','un','ün'], cls: 'ym-front' },
+        { title: '后鼻韵母', items: ['ang','eng','ing','ong'], cls: 'ym-back' }
+    ];
 
     function switchTab(tab) {
         currentTab = tab;
@@ -235,28 +213,57 @@
 
     function renderCards() {
         cardsBox.innerHTML = '';
-        let list = [];
-        if (currentTab === 'sm') list = INITIALS;
-        else if (currentTab === 'ym') list = FINALS;
-        else list = WHOLE_SYLLABLES;
+        
+        if (currentTab === 'sm') {
+            // 声母平铺
+            INITIALS.forEach(text => {
+                const el = document.createElement('div');
+                el.className = 'card sm';
+                if (selectedCard && selectedCard.text === text && selectedCard.type === 'sm') el.classList.add('selected');
+                el.innerHTML = `<div class="text">${text}</div>`;
+                el.onclick = () => selectCard('sm', text);
+                cardsBox.appendChild(el);
+            });
+        } 
+        else if (currentTab === 'ym') {
+            // 韵母按分类平铺
+            FINAL_GROUPS.forEach(group => {
+                const title = document.createElement('div');
+                title.className = 'group-title';
+                title.textContent = group.title;
+                cardsBox.appendChild(title);
 
-        list.forEach(text => {
-            const type = currentTab;
-            const el = document.createElement('div');
-            el.className = 'card ' + type;
-            if (selectedCard && selectedCard.text === text && selectedCard.type === type) el.classList.add('selected');
-            el.innerHTML = `<div class="text" style="font-size: ${text.length > 2 ? '12px' : '16px'}">${text}</div>`;
-            el.onclick = () => { 
-                if (isShovel) return; 
-                if (selectedCard && selectedCard.text === text && selectedCard.type === type) {
-                    selectedCard = null;
-                } else {
-                    selectedCard = { type, text };
-                }
-                renderCards(); 
-            };
-            cardsBox.appendChild(el);
-        });
+                group.items.forEach(text => {
+                    const el = document.createElement('div');
+                    el.className = `card ${group.cls}`;
+                    if (selectedCard && selectedCard.text === text && selectedCard.type === 'ym') el.classList.add('selected');
+                    el.innerHTML = `<div class="text">${text}</div>`;
+                    el.onclick = () => selectCard('ym', text);
+                    cardsBox.appendChild(el);
+                });
+            });
+        } 
+        else {
+            // 整体认读平铺
+            WHOLE_SYLLABLES.forEach(text => {
+                const el = document.createElement('div');
+                el.className = 'card whole';
+                if (selectedCard && selectedCard.text === text && selectedCard.type === 'whole') el.classList.add('selected');
+                el.innerHTML = `<div class="text" style="font-size:12px">${text}</div>`;
+                el.onclick = () => selectCard('whole', text);
+                cardsBox.appendChild(el);
+            });
+        }
+    }
+
+    function selectCard(type, text) {
+        if (isShovel) return;
+        if (selectedCard && selectedCard.text === text && selectedCard.type === type) {
+            selectedCard = null;
+        } else {
+            selectedCard = { type, text };
+        }
+        renderCards();
     }
 
     function initGrid() {
@@ -283,7 +290,7 @@
         el.innerHTML = `
             <div class="p-label-wrap">
                 <div class="p-label">${text}</div>
-                <div class="p-badge">×3</div>
+                <div class="p-badge">×1</div>
             </div>
             <div class="p-model"><div class="p-base"></div><div class="p-stem"></div><div class="${headClass}"></div></div>
         `;
@@ -309,7 +316,6 @@
         if (!selectedCard) { showToast('请先在上方选择卡片！'); return; }
         if (cell.content && cell.content.type === 'full') { showToast('这里已经有成品植物了！'); return; }
 
-        // 种下第一层（半成品）
         if (!cell.content) {
             if (selectedCard.type === 'whole') {
                 showToneModal(selectedCard.text, cell, true);
@@ -324,7 +330,6 @@
             return;
         }
 
-        // 合成逻辑
         const existing = cell.content;
         let newType = selectedCard.type;
         let newText = selectedCard.text;
@@ -341,7 +346,6 @@
 
         let basePy = smStr + ymStr;
         
-        // j q x 遇到 ü 去掉两点
         if (['j', 'q', 'x'].includes(smStr) && ymStr.startsWith('ü')) {
             basePy = smStr + 'u' + ymStr.slice(1);
         }
@@ -377,7 +381,7 @@
             btn.onclick = () => {
                 const finalPy = addToneMark(base, t);
                 
-                // 检查是否超出同拼音上限
+                // 同拼音上限 2 个
                 const samePlants = plants.filter(p => p.pinyin === finalPy);
                 if (samePlants.length >= 2) {
                     showToast(`❌ 场上「${finalPy}」已达上限(2个)！`);
@@ -394,7 +398,7 @@
                 el.style.left = cell.cx + 'px'; el.style.top = cell.cy + 'px';
                 lawn.appendChild(el);
                 
-                // 初始化击杀计数
+                // 初始化击杀计数为 1（因为只需杀 1 个）
                 const plantObj = { 
                     row: cell.row, col: cell.col, x: cell.cx, y: cell.cy, 
                     pinyin: finalPy, hp: 100, cooldown: 0.5, el, cell, killCount: 0 
@@ -426,7 +430,7 @@
         let word;
         do {
             word = WORDS[Math.floor(Math.random() * WORDS.length)];
-        } while (word.t === 0); // 去轻声
+        } while (word.t === 0); 
 
         const py = addToneMark(word.p, word.t); 
         const row = Math.floor(Math.random() * 5);
@@ -449,7 +453,8 @@
         let x = lawn.clientWidth + 40;
         el.style.left = x + 'px'; el.style.top = cell.cy + 'px'; lawn.appendChild(el);
         
-        zombies.push({ row, x, y: cell.cy, hp: 100, maxHp: 100, speed: Math.max(15, 25 - gameTime * 0.2), pinyin: py, el, dead: false });
+        // 僵尸速度极大降低（12 ~ 18），给您充足时间找字母
+        zombies.push({ row, x, y: cell.cy, hp: 100, maxHp: 100, speed: Math.max(10, 18 - gameTime * 0.1), pinyin: py, el, dead: false });
     }
 
     function update(dt) {
@@ -477,7 +482,7 @@
                 if (t) {
                     const el = document.createElement('div');
                     el.className = 'bullet'; el.style.left = p.x + 'px'; el.style.top = p.y + 'px'; lawn.appendChild(el);
-                    bullets.push({ x: p.x, y: p.y, target: t, speed: 400, damage: 50, el, owner: p });
+                    bullets.push({ x: p.x, y: p.y, target: t, speed: 400, damage: 100, el, owner: p }); // 伤害拉满，一枪秒杀
                     p.cooldown = 0.6;
                 }
             }
@@ -500,18 +505,16 @@
                     if (b.owner) {
                         b.owner.killCount++;
                         
-                        // 更新头顶的数字
                         const badge = b.owner.el.querySelector('.p-badge');
-                        if (badge) {
-                            badge.textContent = `×${3 - b.owner.killCount}`;
-                        }
+                        if (badge) badge.textContent = '×0';
 
-                        if (b.owner.killCount >= 3) {
+                        // 核心机制：打死 1 只立刻摧毁！
+                        if (b.owner.killCount >= 1) {
                             const pCell = b.owner.cell;
                             b.owner.el.remove();
                             if (pCell) pCell.content = null;
                             plants = plants.filter(pl => pl !== b.owner);
-                            showToast(`💥 炮台已击杀3只僵尸，光荣退役！`);
+                            showToast(`💥 炮台完成了使命，光荣退役！`);
                         }
                     }
                 }
@@ -529,17 +532,19 @@
         if (!running) return;
         if (!lastTime) lastTime = time;
         const dt = Math.min((time - lastTime) / 1000, 0.05); lastTime = time; gameTime += dt;
+        
         spawnTimer -= dt;
         if (spawnTimer <= 0) { 
             spawnZombie(); 
-            spawnTimer = Math.max(4, 7 - gameTime * 0.05); 
+            // 刷新极慢，最低 6 秒才出一只
+            spawnTimer = Math.max(6, 9 - gameTime * 0.05); 
         }
         update(dt); requestAnimationFrame(loop);
     }
 
     window.resetGame = function() {
         lawn.querySelectorAll('.zombie, .plant-box, .bullet').forEach(el => el.remove());
-        zombies = []; plants = []; bullets = []; lives = 5; score = 0; running = true; gameTime = 0; spawnTimer = 5; lastTime = 0;
+        zombies = []; plants = []; bullets = []; lives = 5; score = 0; running = true; gameTime = 0; spawnTimer = 8; lastTime = 0;
         selectedCard = null; isShovel = false; document.getElementById('btn-shovel').classList.remove('active'); lawn.classList.remove('can-shovel');
         initGrid(); switchTab('sm'); updateHUD();
         document.getElementById('overlay').classList.remove('show'); requestAnimationFrame(loop);
