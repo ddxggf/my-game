@@ -3,82 +3,90 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>植物大战僵尸 · 原版权重版</title>
+<title>植物大战僵尸</title>
 <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
-    body { width: 100vw; height: 100vh; background-color: #2b1b10; overflow: hidden; font-family: "Microsoft YaHei", sans-serif; position: fixed; }
-    #game { width: 100%; height: 100%; background-color: #4a7a2f; display: none; flex-direction: column; }
-    #top-bar { height: 170px; background-color: #5c3a21; border-bottom: 4px solid #3e2615; display: flex; flex-direction: column; position: relative; z-index: 20; flex-shrink: 0; }
-    #tabs { display: flex; height: 35px; background-color: #5c3a21; flex-shrink: 0; }
-    .tab-btn { flex: 1; background: none; border: none; color: #aaa; font-weight: bold; font-size: 14px; cursor: pointer; border-bottom: 3px solid transparent; }
-    .tab-btn.active { color: #ffe680; border-bottom-color: #ffe680; background-color: #7a4b22; }
-    #cards-wrapper { flex: 1; display: flex; flex-wrap: wrap; overflow-y: auto; padding: 8px 80px 8px 10px; gap: 6px; align-items: flex-start; align-content: flex-start; }
-    .card { min-width: 45px; height: 50px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,0.4); margin: 4px; flex-shrink: 0; }
-    .card .text { font-weight: 900; color: #fff; text-shadow: 1px 1px 2px #000; font-size: 16px; }
-    .card.sm { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-    .card.ym { background: linear-gradient(135deg, #fa709a, #fee140); }
-    .card.whole { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
-    #conveyor-mode { flex: 1; display: none; flex-direction: column; background-color: #4a2e19; }
-    .belt-row { flex: 1; display: flex; align-items: center; position: relative; border-bottom: 1px solid #3e2615; overflow-x: auto; padding-left: 10px; padding-right: 60px; }
-    .belt-row::-webkit-scrollbar { display: none; }
-    .belt-row:nth-child(1) { background-color: rgba(79,172,254,0.15); }
-    .belt-row:nth-child(2) { background-color: rgba(250,112,154,0.15); }
-    .belt-row:nth-child(3) { background-color: rgba(161,140,209,0.15); }
-    .belt-card { min-width: 45px; height: 40px; border-radius: 6px; border: 2px solid rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,0.4); margin-right: 6px; flex-shrink: 0; }
-    .belt-card .text { font-weight: 900; color: #fff; text-shadow: 1px 1px 2px #000; font-size: 15px; }
-    #tools { display: flex; gap: 8px; position: absolute; right: 10px; top: 45px; z-index: 25; }
-    .tool-btn { width: 40px; height: 40px; background-color: rgba(255,255,255,0.3); border: 2px solid rgba(255,255,255,0.8); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; cursor: pointer; }
-    #lawn { position: relative; flex: 1; background-color: #5b8c3e; background-image: linear-gradient(to right, rgba(0,0,0,0.15) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.15) 1px, transparent 1px); background-size: 11.111% 20%; overflow: hidden; }
-    #lawn.can-shovel { box-shadow: inset 0 0 30px rgba(255,100,100,0.8); }
-    #hud { position: absolute; top: 8px; left: 8px; color: #fff; font-weight: bold; font-size: 15px; z-index: 15; text-shadow: 0 1px 3px #000; display: flex; gap: 15px; pointer-events: none; }
-    #wave-hud { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); color: #fff; font-weight: bold; font-size: 16px; z-index: 15; text-shadow: 0 1px 3px #000; pointer-events: none; }
-    #huge-wave-text { position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%); font-size: 32px; font-weight: 900; color: #ff3333; text-shadow: 2px 2px 0 #000, 0 0 20px #ff0000; z-index: 100; display: none; animation: pulse 0.5s infinite alternate; white-space: nowrap; }
-    @keyframes pulse { from { transform: translate(-50%,-50%) scale(1); } to { transform: translate(-50%,-50%) scale(1.1); } }
-    #toast { position: absolute; left: 50%; bottom: 20px; transform: translate(-50%,10px); background-color: rgba(0,0,0,0.9); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 14px; opacity: 0; transition: 0.3s; z-index: 300; white-space: nowrap; }
-    #toast.show { opacity: 1; transform: translate(-50%,0); }
-    .plant-box { position: absolute; width: 60px; height: 75px; z-index: 5; transform: translate(-50%,-50%); pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
-    .p-label { background-color: rgba(0,0,0,0.85); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-weight: 900; white-space: nowrap; border: 1px solid rgba(255,255,255,0.5); margin-bottom: 5px; z-index: 2; }
-    .p-model { position: relative; width: 40px; height: 50px; }
-    .p-base { position: absolute; bottom: 0; left: 5px; width: 30px; height: 12px; background-color: #2e5c1a; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-    .p-stem { position: absolute; bottom: 6px; left: 17px; width: 6px; height: 24px; background-color: #7cb342; border-radius: 3px; }
-    .p-head-sm { position: absolute; bottom: 22px; left: 10px; width: 20px; height: 22px; background-color: #3498db; border: 2px solid #2980b9; border-radius: 10px 10px 4px 4px; }
-    .p-head-ym { position: absolute; bottom: 22px; left: 8px; width: 24px; height: 24px; background-color: #f1c40f; border: 2px solid #f39c12; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
-    .p-head-ym::after { content: ''; width: 10px; height: 10px; background-color: #333; border-radius: 50%; }
-    .p-head-full { position: absolute; bottom: 22px; left: 5px; width: 30px; height: 30px; background-color: #2ecc71; border: 2px solid #27ae60; border-radius: 50%; }
-    .p-head-full::before { content: ''; position: absolute; right: -14px; top: 6px; width: 16px; height: 16px; background-color: #2ecc71; border: 2px solid #27ae60; border-radius: 4px 8px 8px 4px; z-index: -1; }
-    .p-head-full::after { content: ''; position: absolute; right: -16px; top: 10px; width: 6px; height: 8px; background-color: #145a32; border-radius: 50%; }
-    .zombie { position: absolute; width: 60px; height: 100px; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; transform: translate(-50%,-50%); transition: left 0.1s linear; }
-    .zombie.die { animation: dieAnim 0.4s forwards; }
-    @keyframes dieAnim { to { opacity: 0; transform: translate(-50%,-80%) rotate(-30deg); } }
-    .z-head { background-color: rgba(20,20,20,0.9); border-radius: 8px; padding: 4px 10px; text-align: center; margin-bottom: 2px; border: 2px solid rgba(255,255,255,0.5); display: flex; flex-direction: column; align-items: center; z-index: 12; min-width: 50px; }
-    .z-char { font-size: 22px; font-weight: 900; color: #fff; line-height: 1.1; display: flex; gap: 2px; }
-    .z-tone { font-size: 16px; color: #ffd700; font-weight: bold; line-height: 1; margin-top: 2px; display: flex; gap: 4px; }
-    .z-hp { width: 40px; height: 4px; background-color: #000; border-radius: 2px; margin-top: 2px; overflow: hidden; z-index: 12; }
-    .z-hp-bar { height: 100%; background-color: #ff4b4b; width: 100%; }
-    .z-body-wrap { position: relative; width: 40px; height: 50px; display: flex; justify-content: center; align-items: flex-end; z-index: 11; }
-    .bullet { position: absolute; width: 14px; height: 14px; border-radius: 50%; z-index: 8; background-color: #b8f57a; box-shadow: 0 0 8px #b8f57a; transform: translate(-50%,-50%); }
-    .mower { position: absolute; width: 50px; height: 40px; z-index: 9; transform: translate(-50%,-50%); pointer-events: none; transition: left 0.2s linear; }
-    .mower::before { content: ''; position: absolute; bottom: 0; left: 5px; width: 40px; height: 20px; background-color: #c0392b; border-radius: 4px; border: 2px solid #7f8c8d; }
-    .mower::after { content: ''; position: absolute; bottom: -5px; left: 10px; width: 12px; height: 12px; background-color: #333; border-radius: 50%; box-shadow: 18px 0 0 #333; }
-    #tone-modal, #overlay, #start-screen { position: absolute; inset: 0; background-color: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 200; flex-direction: column; color: #fff; }
-    #tone-modal.show, #overlay.show, #start-screen.show { display: flex; }
-    .modal-box { background-color: #fff; padding: 20px; border-radius: 12px; text-align: center; width: 260px; color: #333; }
-    #tone-base { font-size: 30px; font-weight: 900; color: #e74c3c; margin-bottom: 15px; }
-    .tone-btns button { display: block; width: 100%; padding: 10px; margin-bottom: 8px; font-size: 16px; font-weight: bold; border-radius: 8px; border: 2px solid #ccc; background-color: #f9f9f9; cursor: pointer; }
-    #start-screen { background: linear-gradient(180deg, #4facfe 0%, #00f2fe 40%, #7bdcb5 70%, #2ecc71 100%); transition: opacity 0.5s, transform 0.5s; }
-    #start-screen.hide { opacity: 0; transform: scale(1.1); pointer-events: none; }
-    .title-main { font-size: 56px; font-weight: 900; color: #fff; text-shadow: 0 4px 0 #1b5e20; margin-bottom: 10px; transform: rotate(-3deg); }
-    .title-sub { font-size: 24px; font-weight: bold; color: #ffeb3b; text-shadow: 0 2px 0 #000; margin-bottom: 40px; }
-    .rules-box { background-color: rgba(0,0,0,0.6); border-radius: 16px; padding: 20px 30px; color: #fff; line-height: 1.8; font-size: 16px; border: 2px solid rgba(255,255,255,0.2); }
-    .rules-box span { color: #ffe680; font-weight: bold; }
-    .btn-group { display: flex; flex-direction: column; gap: 15px; margin-top: 30px; z-index: 2; align-items: center; }
-    .main-btns { display: flex; gap: 15px; }
-    #btn-start, #btn-continue { padding: 15px 40px; font-size: 20px; font-weight: 900; color: #fff; background: linear-gradient(180deg, #ff9800, #f57c00); border: none; border-radius: 30px; box-shadow: 0 6px 0 #e65100; cursor: pointer; }
-    #btn-continue { background: linear-gradient(180deg, #4caf50, #388e3c); box-shadow: 0 6px 0 #1b5e20; display: none; }
-    .sys-btns { display: flex; gap: 15px; margin-top: 10px; }
-    .sys-btns button { padding: 10px 20px; font-size: 14px; border-radius: 20px; background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.5); cursor: pointer; }
-    .sys-btns button:hover { background: rgba(255,255,255,0.4); }
-    #file-upload { display: none; }
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-tap-highlight-color:transparent}
+body{width:100vw;height:100vh;background:#2b1b10;overflow:hidden;font-family:"Microsoft YaHei",sans-serif;position:fixed}
+#game{width:100%;height:100%;background:#4a7a2f;display:none;flex-direction:column}
+#top-bar{height:170px;background:#5c3a21;border-bottom:4px solid #3e2615;display:flex;flex-direction:column;position:relative;z-index:20;flex-shrink:0}
+#tabs{display:flex;height:35px;background:#5c3a21;flex-shrink:0}
+.tab-btn{flex:1;background:none;border:none;color:#aaa;font-weight:bold;font-size:14px;cursor:pointer;border-bottom:3px solid transparent}
+.tab-btn.active{color:#ffe680;border-bottom-color:#ffe680;background:#7a4b22}
+#cards-wrapper{flex:1;display:flex;flex-wrap:wrap;overflow-y:auto;padding:8px 80px 8px 10px;gap:6px;align-items:flex-start;align-content:flex-start}
+.card{min-width:45px;height:50px;border-radius:8px;border:2px solid rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,0.4);margin:4px;flex-shrink:0}
+.card .text{font-weight:900;color:#fff;text-shadow:1px 1px 2px #000;font-size:16px}
+.card.sm{background:linear-gradient(135deg,#4facfe,#00f2fe)}
+.card.ym{background:linear-gradient(135deg,#fa709a,#fee140)}
+.card.whole{background:linear-gradient(135deg,#a18cd1,#fbc2eb)}
+#conveyor-mode{flex:1;display:none;flex-direction:column;background:#4a2e19}
+.belt-row{flex:1;display:flex;align-items:center;position:relative;border-bottom:1px solid #3e2615;overflow-x:auto;padding-left:10px;padding-right:60px}
+.belt-row::-webkit-scrollbar{display:none}
+.belt-row:nth-child(1){background:rgba(79,172,254,0.15)}
+.belt-row:nth-child(2){background:rgba(250,112,154,0.15)}
+.belt-row:nth-child(3){background:rgba(161,140,209,0.15)}
+.belt-card{min-width:45px;height:40px;border-radius:6px;border:2px solid rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,0.4);margin-right:6px;flex-shrink:0}
+.belt-card .text{font-weight:900;color:#fff;text-shadow:1px 1px 2px #000;font-size:15px}
+#tools{display:flex;gap:8px;position:absolute;right:10px;top:45px;z-index:25}
+.tool-btn{width:40px;height:40px;background:rgba(255,255,255,0.3);border:2px solid rgba(255,255,255,0.8);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;cursor:pointer}
+#lawn{position:relative;flex:1;background-color:#5b8c3e;background-image:linear-gradient(to right,rgba(0,0,0,0.15) 1px,transparent 1px),linear-gradient(to bottom,rgba(0,0,0,0.15) 1px,transparent 1px);background-size:11.111% 20%;overflow:hidden}
+#lawn.can-shovel{box-shadow:inset 0 0 30px rgba(255,100,100,0.8)}
+#hud{position:absolute;top:8px;left:8px;color:#fff;font-weight:bold;font-size:15px;z-index:15;text-shadow:0 1px 3px #000;display:flex;gap:15px;pointer-events:none}
+#wave-hud{position:absolute;top:10px;left:50%;transform:translateX(-50%);color:#fff;font-weight:bold;font-size:16px;z-index:15;text-shadow:0 1px 3px #000;pointer-events:none}
+#huge-wave-text{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);font-size:32px;font-weight:900;color:#ff3333;text-shadow:2px 2px 0 #000,0 0 20px #ff0000;z-index:100;display:none;animation:pulse 0.5s infinite alternate;white-space:nowrap}
+@keyframes pulse{from{transform:translate(-50%,-50%) scale(1)}to{transform:translate(-50%,-50%) scale(1.1)}}
+#toast{position:absolute;left:50%;bottom:20px;transform:translate(-50%,10px);background:rgba(0,0,0,0.9);color:#fff;padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:0.3s;z-index:300;white-space:nowrap}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.plant-box{position:absolute;width:60px;height:75px;z-index:5;transform:translate(-50%,-50%);pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.p-label{background:rgba(0,0,0,0.85);color:#fff;padding:2px 6px;border-radius:4px;font-size:13px;font-weight:900;white-space:nowrap;border:1px solid rgba(255,255,255,0.5);margin-bottom:5px;z-index:2}
+.p-model{position:relative;width:40px;height:50px}
+.p-base{position:absolute;bottom:0;left:5px;width:30px;height:12px;background:#2e5c1a;border-radius:50%;box-shadow:0 2px 4px rgba(0,0,0,0.5)}
+.p-stem{position:absolute;bottom:6px;left:17px;width:6px;height:24px;background:#7cb342;border-radius:3px}
+.p-head-sm{position:absolute;bottom:22px;left:10px;width:20px;height:22px;background:#3498db;border:2px solid #2980b9;border-radius:10px 10px 4px 4px}
+.p-head-ym{position:absolute;bottom:22px;left:8px;width:24px;height:24px;background:#f1c40f;border:2px solid #f39c12;border-radius:50%;display:flex;justify-content:center;align-items:center}
+.p-head-ym::after{content:'';width:10px;height:10px;background:#333;border-radius:50%}
+.p-head-full{position:absolute;bottom:22px;left:5px;width:30px;height:30px;background:#2ecc71;border:2px solid #27ae60;border-radius:50%}
+.p-head-full::before{content:'';position:absolute;right:-14px;top:6px;width:16px;height:16px;background:#2ecc71;border:2px solid #27ae60;border-radius:4px 8px 8px 4px;z-index:-1}
+.p-head-full::after{content:'';position:absolute;right:-16px;top:10px;width:6px;height:8px;background:#145a32;border-radius:50%}
+.zombie{position:absolute;width:60px;height:100px;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;transform:translate(-50%,-50%);transition:left 0.1s linear}
+.zombie.die{animation:dieAnim 0.4s forwards}
+@keyframes dieAnim{to{opacity:0;transform:translate(-50%,-80%) rotate(-30deg)}}
+.z-head{background:rgba(20,20,20,0.9);border-radius:8px;padding:4px 10px;text-align:center;margin-bottom:2px;border:2px solid rgba(255,255,255,0.5);display:flex;flex-direction:column;align-items:center;z-index:12;min-width:65px}
+.z-char{font-size:22px;font-weight:900;color:#fff;line-height:1.1;display:flex;gap:2px;justify-content:center}
+.z-tone{font-size:16px;color:#ffd700;font-weight:bold;line-height:1;margin-top:2px;display:flex;gap:4px;justify-content:center}
+.z-hp{width:40px;height:4px;background:#000;border-radius:2px;margin-top:2px;overflow:hidden;z-index:12}
+.z-hp-bar{height:100%;background:#ff4b4b;width:100%}
+.z-body-wrap{position:relative;width:40px;height:50px;display:flex;justify-content:center;align-items:flex-end;z-index:11}
+.bullet{position:absolute;width:14px;height:14px;border-radius:50%;z-index:8;background:#b8f57a;box-shadow:0 0 8px #b8f57a;transform:translate(-50%,-50%)}
+.mower{position:absolute;width:50px;height:40px;z-index:9;transform:translate(-50%,-50%);pointer-events:none;transition:left 0.2s linear}
+.mower::before{content:'';position:absolute;bottom:0;left:5px;width:40px;height:20px;background:#c0392b;border-radius:4px;border:2px solid #7f8c8d}
+.mower::after{content:'';position:absolute;bottom:-5px;left:10px;width:12px;height:12px;background:#333;border-radius:50%;box-shadow:18px 0 0 #333}
+#tone-modal,#overlay,#start-screen{position:absolute;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:200;flex-direction:column;color:#fff}
+#tone-modal.show,#overlay.show,#start-screen.show{display:flex}
+.modal-box{background:#fff;padding:20px;border-radius:12px;text-align:center;width:260px;color:#333}
+#tone-base{font-size:30px;font-weight:900;color:#e74c3c;margin-bottom:15px}
+.tone-btns button{display:block;width:100%;padding:10px;margin-bottom:8px;font-size:16px;font-weight:bold;border-radius:8px;border:2px solid #ccc;background:#f9f9f9;cursor:pointer}
+#start-screen{background:linear-gradient(180deg,#4facfe 0%,#00f2fe 40%,#7bdcb5 70%,#2ecc71 100%);transition:opacity 0.5s,transform 0.5s;position:relative;overflow:hidden}
+#start-screen.hide{opacity:0;transform:scale(1.1);pointer-events:none}
+.title-main{font-size:56px;font-weight:900;color:#fff;text-shadow:0 4px 0 #1b5e20;margin-bottom:10px;transform:rotate(-3deg);z-index:2}
+.title-sub{font-size:24px;font-weight:bold;color:#ffeb3b;text-shadow:0 2px 0 #000;margin-bottom:40px;z-index:2}
+.rules-box{background:rgba(0,0,0,0.6);border-radius:16px;padding:20px 30px;color:#fff;line-height:1.8;font-size:16px;border:2px solid rgba(255,255,255,0.2);z-index:2;margin-bottom:20px}
+.rules-box span{color:#ffe680;font-weight:bold}
+.btn-group{display:flex;flex-direction:column;gap:15px;z-index:2;align-items:center}
+.main-btns{display:flex;gap:15px}
+#btn-start,#btn-select-level{padding:15px 40px;font-size:20px;font-weight:900;color:#fff;background:linear-gradient(180deg,#ff9800,#f57c00);border:none;border-radius:30px;box-shadow:0 6px 0 #e65100;cursor:pointer}
+#btn-select-level{background:linear-gradient(180deg,#4caf50,#388e3c);box-shadow:0 6px 0 #1b5e20}
+.sys-btns{display:flex;gap:15px;margin-top:10px}
+.sys-btns button{padding:10px 20px;font-size:14px;border-radius:20px;background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.5);cursor:pointer}
+.sys-btns button:hover{background:rgba(255,255,255,0.4)}
+#file-upload{display:none}
+#level-panel{position:absolute;inset:0;background:rgba(0,0,0,0.9);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:10;backdrop-filter:blur(5px)}
+#level-panel h3{font-size:24px;color:#fff;margin-bottom:30px}
+#level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:20px;margin-bottom:40px}
+.level-btn{width:60px;height:60px;border-radius:50%;font-size:24px;font-weight:900;border:3px solid #fff;background:linear-gradient(135deg,#4facfe,#00f2fe);color:#fff;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;transition:transform 0.1s}
+.level-btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,0.5)}
+.level-btn.locked{background:#444;color:#666;border-color:#333;box-shadow:0 4px 0 #222;cursor:not-allowed}
+.level-btn.current{box-shadow:0 0 20px #ffe680,0 4px 0 #e65100;border-color:#ffe680;background:linear-gradient(135deg,#ff9800,#f57c00)}
+#btn-close-panel{padding:12px 40px;font-size:18px;border-radius:20px;background:#555;color:#fff;border:none;cursor:pointer}
 </style>
 </head>
 <body>
@@ -94,14 +102,18 @@
     </div>
     <div class="btn-group">
         <div class="main-btns">
-            <button id="btn-continue">继续游戏</button>
-            <button id="btn-start">重新开始</button>
+            <button id="btn-select-level">选择关卡</button>
         </div>
         <div class="sys-btns">
-            <button id="btn-export">导出缓存 (ZIP)</button>
-            <button id="btn-import">导入缓存 (ZIP)</button>
+            <button id="btn-export">导出缓存</button>
+            <button id="btn-import">导入缓存</button>
             <input type="file" id="file-upload" accept=".zip,.txt">
         </div>
+    </div>
+    <div id="level-panel">
+        <h3>选择关卡</h3>
+        <div id="level-grid"></div>
+        <button id="btn-close-panel">返回</button>
     </div>
 </div>
 
@@ -139,12 +151,12 @@
 
 <script>
     const _layerDefs = [
-        "Z0", "Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7", "Z8", "Z9",
-        "A0", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9",
-        "B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9",
-        "C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9",
-        "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9",
-        "E0", "E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9"
+        "Z0","Z1","Z2","Z3","Z4","Z5","Z6","Z7","Z8","Z9",
+        "A0","A1","A2","A3","A4","A5","A6","A7","A8","A9",
+        "B0","B1","B2","B3","B4","B5","B6","B7","B8","B9",
+        "C0","C1","C2","C3","C4","C5","C6","C7","C8","C9",
+        "D0","D1","D2","D3","D4","D5","D6","D7","D8","D9",
+        "E0","E1","E2","E3","E4","E5","E6","E7","E8","E9"
     ];
 
     function _sysConfigs() {
@@ -213,7 +225,6 @@
     let score = 0;
     let running = false;
     let lastTime = 0;
-    
     let levelIndex = 0; 
     let currentLevel = LEVELS[levelIndex];
     let currentWave = 0;
@@ -222,92 +233,97 @@
     let waveStartTime = 0;
     let laneProtectWaves = [0,0,0,0,0];
 
-    window.onload = () => {
-        const savedLvl = _pullState();
-        if (savedLvl > 1) {
-            document.getElementById('btn-continue').style.display = 'block';
-            document.getElementById('btn-continue').onclick = () => {
-                levelIndex = savedLvl - 1;
+    function renderLevelGrid() {
+        const grid = document.getElementById('level-grid');
+        grid.innerHTML = '';
+        const maxUnlocked = _pullState();
+        for (let i = 1; i <= 10; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'level-btn' + (i <= maxUnlocked ? '' : ' locked') + (i === maxUnlocked ? ' current' : '');
+            btn.textContent = i <= maxUnlocked ? i : '🔒';
+            btn.onclick = () => {
+                if (i > maxUnlocked) return;
+                document.getElementById('level-panel').style.display = 'none';
                 document.getElementById('start-screen').classList.add('hide');
                 document.getElementById('game').style.display = 'flex';
+                levelIndex = i - 1;
+                currentLevel = LEVELS[levelIndex];
                 setTimeout(() => { initGrid(); resetGame(); }, 50);
             };
+            grid.appendChild(btn);
         }
-        
-        document.getElementById('btn-start').onclick = () => {
-            localStorage.removeItem('_v_layout_cache');
-            levelIndex = 0;
-            document.getElementById('start-screen').classList.add('hide');
-            document.getElementById('game').style.display = 'flex';
-            setTimeout(() => { initGrid(); resetGame(); }, 50);
-        };
+    }
 
-        document.getElementById('btn-export').onclick = () => {
-            let realData = _genRenderToken(levelIndex + 1);
-            let lines = _sysConfigs(); 
-            
-            if(realData) {
-                let chunks = realData.split('').join('');
-                for(let i=0; i<10; i++) {
-                    lines.push(`#R${i}:${chunks.substring(i*10, (i+1)*10)}`);
-                }
+    document.getElementById('btn-select-level').addEventListener('click', () => {
+        renderLevelGrid();
+        document.getElementById('level-panel').style.display = 'flex';
+    });
+
+    document.getElementById('btn-close-panel').addEventListener('click', () => {
+        document.getElementById('level-panel').style.display = 'none';
+    });
+
+    document.getElementById('btn-export').addEventListener('click', () => {
+        let realData = _genRenderToken(levelIndex + 1);
+        let lines = _sysConfigs(); 
+        if(realData) {
+            let chunks = realData.split('').join('');
+            for(let i=0; i<10; i++) {
+                lines.push(`#R${i}:${chunks.substring(i*10, (i+1)*10)}`);
             }
-            
-            for(let i=lines.length-1; i>0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [lines[i], lines[j]] = [lines[j], lines[i]];
-            }
+        }
+        for(let i=lines.length-1; i>0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [lines[i], lines[j]] = [lines[j], lines[i]];
+        }
+        let content = "SYS_UI_LAYOUT_CACHE_V2\n" + lines.join("\n");
+        let blob = new Blob([content], {type: 'application/octet-stream'});
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = 'sys_config_cache.zip';
+        a.click();
+        URL.revokeObjectURL(url);
+    });
 
-            let content = "SYS_UI_LAYOUT_CACHE_V2\n" + lines.join("\n");
-            let blob = new Blob([content], {type: 'application/octet-stream'});
-            let url = URL.createObjectURL(blob);
-            let a = document.createElement('a');
-            a.href = url;
-            a.download = 'sys_config_cache.zip';
-            a.click();
-            URL.revokeObjectURL(url);
-        };
+    document.getElementById('btn-import').addEventListener('click', () => {
+        document.getElementById('file-upload').click();
+    });
 
-        document.getElementById('btn-import').onclick = () => {
-            document.getElementById('file-upload').click();
-        };
-
-        document.getElementById('file-upload').onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                const txt = evt.target.result;
-                let parts = [];
-                let lines = txt.split('\n');
-                lines.forEach(l => {
-                    if(l.startsWith('#R')) {
-                        parts.push(l.split(':')[1]);
-                    }
-                });
-                
-                if(parts.length === 10) {
-                    let joined = parts.join('');
-                    try {
-                        let dec = atob(joined.split('').reverse().join(''));
-                        let prt = dec.split('|');
-                        let lv = parseInt(prt[prt.length - 1], 36) / 13;
-                        if(lv >= 1 && lv <= 10) {
-                            localStorage.setItem('_v_layout_cache', joined);
-                            alert("缓存同步成功！请重新打开页面继续游戏。");
-                            location.reload();
-                        } else throw new Error();
-                    } catch(e) {
-                        alert("缓存文件损坏或格式不支持。");
-                    }
-                } else {
-                    alert("未找到合法的核心配置节点。");
+    document.getElementById('file-upload').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            const txt = evt.target.result;
+            let parts = [];
+            let lines = txt.split('\n');
+            lines.forEach(l => {
+                if(l.startsWith('#R')) {
+                    parts.push(l.split(':')[1]);
                 }
-                e.target.value = '';
-            };
-            reader.readAsText(file);
+            });
+            if(parts.length === 10) {
+                let joined = parts.join('');
+                try {
+                    let dec = atob(joined.split('').reverse().join(''));
+                    let prt = dec.split('|');
+                    let lv = parseInt(prt[prt.length - 1], 36) / 13;
+                    if(lv >= 1 && lv <= 10) {
+                        localStorage.setItem('_v_layout_cache', joined);
+                        alert("缓存同步成功！请重新打开页面继续游戏。");
+                        location.reload();
+                    } else throw new Error();
+                } catch(e) {
+                    alert("缓存文件损坏或格式不支持。");
+                }
+            } else {
+                alert("未找到合法的核心配置节点。");
+            }
+            e.target.value = '';
         };
-    };
+        reader.readAsText(file);
+    });
 
     function addToneMark(py, tone) {
         if (tone === 0) return py;
@@ -323,10 +339,10 @@
         return py;
     }
 
-    document.getElementById('btn-fullscreen').onclick = () => {
+    document.getElementById('btn-fullscreen').addEventListener('click', () => {
         if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
         else document.exitFullscreen();
-    };
+    });
 
     function switchTab(tab) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -339,7 +355,6 @@
         cardsBox.style.display = 'flex';
         cardsBox.innerHTML = '';
         let activeTab = document.querySelector('.tab-btn.active').textContent;
-        
         if (activeTab === '声母表') {
             INITIALS.forEach(t => {
                 const el = document.createElement('div'); el.className = 'card sm'; el.innerHTML = `<div class="text">${t}</div>`; el.onclick = () => pickCard('sm', t); cardsBox.appendChild(el);
@@ -438,11 +453,11 @@
         box.appendChild(c); modal.classList.add('show');
     }
 
-    document.getElementById('btn-shovel').onclick = () => {
+    document.getElementById('btn-shovel').addEventListener('click', () => {
         isShovel = !isShovel;
         document.getElementById('btn-shovel').classList.toggle('active', isShovel);
         lawn.classList.toggle('can-shovel', isShovel);
-    };
+    });
 
     function createPlantDOM(type, text) {
         const el = document.createElement('div'); el.className = 'plant-box';
@@ -457,7 +472,6 @@
         const cx = e.clientX - rect.left, cy = e.clientY - rect.top;
         const cell = cells.find(c => cx >= c.cx - c.w / 2 && cx <= c.cx + c.w / 2 && cy >= c.cy - c.h / 2 && cy <= c.cy + c.h / 2);
         if (!cell) return;
-        
         if (isShovel) {
             if (cell.content) {
                 if (cell.content.type === 'full') plants = plants.filter(p => p.el !== cell.content.el);
@@ -493,10 +507,8 @@
                 document.getElementById('over-title').style.color = "#2ecc71";
                 document.getElementById('final-score').textContent = score;
                 document.getElementById('overlay').classList.add('show'); 
-                
                 const token = _genRenderToken(levelIndex + 1);
                 if(token) localStorage.setItem('_v_layout_cache', token);
-                
                 if (levelIndex < LEVELS.length - 1) {
                     document.getElementById('btn-next-level').style.display = 'block';
                 } else {
@@ -510,8 +522,14 @@
         waveStartTime = performance.now();
         waveHud.textContent = `${currentLevel.name} | 波次 ${currentWave}/${TOTAL_WAVES}`;
         
-        let isHuge = currentLevel.hugeWaves.includes(currentWave);
-        if (isHuge) { hugeWaveText.style.display = 'block'; setTimeout(() => { hugeWaveText.style.display = 'none'; }, 2000); }
+        let huge = isHugeWave(currentLevel, currentWave);
+        if (huge) { hugeWaveText.style.display = 'block'; setTimeout(() => { hugeWaveText.style.display = 'none'; }, 2000); }
         
-        let budget = currentLevel.startBudget + (currentWave - 1) * currentLevel.budgetAdd;
-        let activeRows = [0,1,2,3,4].filter(r => laneProtectWaves[r] ==
+        let budget = calcWaveBudget(currentLevel, currentWave);
+        let activeRows = [0,1,2,3,4].filter(r => laneProtectWaves[r] === 0);
+        if (activeRows.length === 0) activeRows = [0,1,2,3,4];
+        
+        if (huge) {
+            for (let i = 0; i < 2; i++) {
+                let row = activeRows[Math.floor(Math.random() * activeRows.length)];
+                createZombieDOM('flag', ro
