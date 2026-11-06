@@ -1,407 +1,329 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>无尽进化</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>植物大战僵尸 · 拼音版</title>
 <style>
-  body { background: #0b0f19; color: #e2e8f0; margin: 0; overflow: hidden; font-family: sans-serif; user-select: none; -webkit-user-select: none; }
-  .hud { position: fixed; top: 0; width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.9); z-index: 100; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; box-sizing: border-box;}
-  .stats { display: flex; flex-direction: column; gap: 3px; font-size: 13px;}
-  .res-dna { color: #e2e8f0; }
-  .res-cps { color: #10b981; font-size: 11px;}
-  .res-reb { color: #a855f7; }
-  .res-asc { color: #fbbf24; }
-  .tabs { display: flex; gap: 5px; }
-  .tab-btn { background: #222; color: #888; border: 1px solid #444; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;}
-  .tab-btn.active { background: #10b981; color: #fff; border-color: #10b981;}
-  #tabReb.active { background: #a855f7; border-color: #a855f7; color: #fff;}
-  #tabAsc.active { background: #fbbf24; border-color: #fbbf24; color: #000;}
-  #gearIcon { cursor: pointer; font-size: 18px; color: #888; padding-right: 10px;}
-  #zoomContainer { position: absolute; right: 10px; top: 100px; bottom: 100px; width: 30px; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  #zoomSlider { -webkit-appearance: slider-vertical; width: 10px; height: 100%; accent-color: #10b981; cursor: pointer; }
-  #map-wrap { position: absolute; top: 75px; left: 0; width: 100vw; height: calc(100vh - 145px); overflow: hidden; touch-action: none; }
-  #map { position: absolute; width: 10000px; height: 10000px; background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 40px 40px; transform-origin: 0 0; }
-  #lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
-  .node { position: absolute; width: 150px; padding: 10px; background: #161b22; border: 2px solid #30363d; border-radius: 10px; text-align: center; font-size: 12px; transform: translate(-50%,-50%); transition: 0.2s; z-index: 2; display: flex; flex-direction: column; justify-content: center; align-items: center;}
-  .node.can { border-color: #10b981; box-shadow: 0 0 10px #10b981; cursor: pointer; }
-  .node.lock { opacity: 0.4; }
-  .node.max { border-color: #fbbf24; background: #1e1b10;}
-  .node.reb { border-color: #a855f7; }
-  .node.asc { border-color: #fbbf24; }
-  .n-title { font-weight: bold; color: #fff; margin-bottom: 2px; font-size: 13px;}
-  .n-lvl { font-size: 11px; color: #d2a8ff; margin-bottom: 2px;}
-  .n-desc { font-size: 10px; color: #eab308; margin-bottom: 4px; line-height:1.2;}
-  .n-gain { font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 4px; line-height:1.2; white-space: pre-wrap;}
-  .n-cost { color: #3fb950; font-weight: bold; }
-  .n-req { font-size: 10px; color: #ef4444; margin-top: 4px; line-height: 1.2;}
-  #action-wrap { position: absolute; bottom: 0; width: 100%; height: 70px; background: rgba(0,0,0,0.9); z-index: 100; display: flex; justify-content: center; align-items: center; border-top: 1px solid #333;}
-  .action-btn { padding: 10px 20px; border-radius: 20px; font-weight: bold; border: none; cursor: pointer; display: none; font-size: 14px;}
-  #btnRebirth { background: #a855f7; color: #fff; box-shadow: 0 0 10px rgba(168,85,247,0.5);}
-  #btnAscend { background: #fbbf24; color: #000; box-shadow: 0 0 10px rgba(251,191,36,0.5);}
-  .action-btn:disabled { opacity: 0.4; box-shadow: none; cursor: not-allowed; }
-  #settingsPanel { display: none; position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 280px; background: #1a1a1a; border: 1px solid #444; padding: 20px; border-radius: 12px; z-index: 200; color: #ccc; font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);}
-  .setting-row { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;}
-  .setting-row input[type="range"] { width: 100px; accent-color: #10b981; }
-  .close-btn { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 18px; color: #888;}
-  #sysTitle { font-weight: bold; margin-bottom: 20px; color: #fff; display: inline-block; cursor: default;}
-  .btn { background: #333; color: #fff; border: 1px solid #555; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-tap-highlight-color:transparent}
+body{width:100vw;height:100vh;background:#2b1b10;overflow:hidden;font-family:sans-serif;position:fixed}
+#game{width:100%;height:100%;background:#4a7a2f;display:flex;flex-direction:column}
+#top-bar{height:85px;background:#7a4b22;border-bottom:4px solid #5c3a21;display:flex;align-items:center;z-index:20;flex-shrink:0}
+#cards-wrapper{flex:1;height:100%;display:flex;overflow-x:auto;padding:0 5px;gap:5px;align-items:center;-webkit-overflow-scrolling:touch}
+#cards-wrapper::-webkit-scrollbar{display:none}
+.card{min-width:45px;height:65px;border-radius:6px;border:2px solid rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,0.4);flex-shrink:0}
+.card:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,0.4)}
+.card .text{font-weight:900;color:#fff;text-shadow:1px 1px 2px #000;font-size:16px}
+.card.sm{background:linear-gradient(135deg,#4facfe,#00f2fe)}
+.card.ym{background:linear-gradient(135deg,#fa709a,#fee140)}
+.card.whole{background:linear-gradient(135deg,#a18cd1,#fbc2eb)}
+#tools{display:flex;padding:0 10px}
+.tool-btn{width:40px;height:40px;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;cursor:pointer}
+.tool-btn.active{background:rgba(255,100,100,0.8);border-color:#ff6b6b}
+#lawn{position:relative;flex:1;background-color:#5b8c3e;background-image:linear-gradient(to right,rgba(0,0,0,0.1) 1px,transparent 1px),linear-gradient(to bottom,rgba(0,0,0,0.1) 1px,transparent 1px);background-size:11.111% 20%;overflow:hidden;transition:box-shadow 0.3s}
+#lawn.can-plant{box-shadow:inset 0 0 30px rgba(255,230,128,0.8)}
+#lawn.can-shovel{box-shadow:inset 0 0 30px rgba(255,100,100,0.8)}
+#hud{position:absolute;top:5px;left:5px;color:#fff;font-weight:bold;font-size:14px;z-index:15;text-shadow:0 1px 3px #000;display:flex;gap:15px;pointer-events:none}
+#stage{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);border-radius:12px;padding:8px 16px;display:flex;align-items:center;gap:10px;z-index:50;color:#fff}
+#stage.hide{display:none}
+#stage-text{font-size:20px;font-weight:bold}
+#stage-clear{background:#ff6b6b;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:14px}
+#guide{position:absolute;top:60%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:bold;color:rgba(255,255,255,0.4);text-align:center;line-height:1.5;pointer-events:none}
+.plant{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:5;transform:translate(-50%,-50%);pointer-events:none}
+.p-pinyin{background:rgba(0,0,0,0.8);color:#fff;padding:2px 6px;border-radius:4px;font-size:14px;font-weight:900;white-space:nowrap;border:1px solid rgba(255,255,255,0.5)}
+.p-emoji{font-size:30px;margin-top:2px}
+.zombie{position:absolute;width:70px;height:110px;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;transform:translate(-50%,-50%)}
+.zombie.die{animation:die 0.4s forwards}
+@keyframes die{to{opacity:0;transform:translate(-50%,-80%) rotate(-30deg)}}
+.z-head{background:rgba(20,20,20,0.9);border-radius:6px;padding:2px 8px;text-align:center;margin-bottom:2px;border:2px solid rgba(255,255,255,0.5)}
+.z-char{font-size:18px;font-weight:900;color:#fff}
+.z-pinyin{font-size:12px;color:#ffd700;font-weight:bold}
+.z-body{font-size:36px;line-height:1}
+.z-hp{width:44px;height:4px;background:#000;border-radius:2px;margin-top:2px;overflow:hidden}
+.z-hp-bar{height:100%;background:#ff4b4b;width:100%}
+.bullet{position:absolute;width:12px;height:12px;border-radius:50%;z-index:8;background:#b8f57a;box-shadow:0 0 8px #b8f57a;transform:translate(-50%,-50%)}
+#tone-modal,#overlay{position:absolute;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:200}
+#tone-modal.show,#overlay.show{display:flex}
+.modal-box{background:#fff;padding:20px;border-radius:12px;text-align:center;width:260px}
+#tone-base{font-size:30px;font-weight:900;color:#e74c3c;margin-bottom:15px}
+.tone-btns button{display:block;width:100%;padding:10px;margin-bottom:8px;font-size:16px;font-weight:bold;border-radius:8px;border:2px solid #ccc;background:#f9f9f9;cursor:pointer}
+#toast{position:absolute;left:50%;bottom:20px;transform:translate(-50%,10px);background:rgba(0,0,0,0.9);color:#fff;padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:0.3s;z-index:300;white-space:nowrap}
+#toast.show{opacity:1;transform:translate(-50%,0)}
 </style>
 </head>
 <body>
-<div class="hud">
-  <div class="stats" id="dnaIndex">
-    <div class="res-dna">DNA: <span id="dnaDisplay">15</span></div>
-    <div class="res-cps" id="cpsDisplay">每秒: 2</div>
-    <div class="res-reb">重生币: <span id="rebDisplay">0</span></div>
-    <div class="res-asc">飞升币: <span id="ascDisplay">0</span></div>
-  </div>
-  <div class="tabs">
-    <button id="tabDna" class="tab-btn active" onclick="switchTab('dna')">细胞树</button>
-    <button id="tabReb" class="tab-btn" onclick="switchTab('reb')">重生树</button>
-    <button id="tabAsc" class="tab-btn" onclick="switchTab('asc')">飞升树</button>
-  </div>
-  <div id="gearIcon">⚙️</div>
-</div>
-<div id="zoomContainer">
-  <input type="range" id="zoomSlider" min="0.2" max="1.5" step="0.05" value="0.6">
-</div>
-<div id="map-wrap">
-  <div id="map"><svg id="lines"></svg></div>
-</div>
-<div id="action-wrap">
-  <button id="btnRebirth" onclick="doRebirth()">重塑肉身</button>
-  <button id="btnAscend" onclick="doAscend()">突破飞升</button>
-</div>
-<div id="settingsPanel">
-  <div class="close-btn" onclick="document.getElementById('settingsPanel').style.display='none'">✖</div>
-  <div id="sysTitle">游戏设置</div>
-  <div class="setting-row">
-    <label>背景音乐</label>
-    <input type="range" min="0" max="100" value="50">
-  </div>
-  <div class="setting-row">
-    <label>本地配置备份 (ZIP)</label>
-    <div>
-      <button class="btn" onclick="exportSaveFile()">生成</button>
-      <button class="btn" onclick="triggerImport()">恢复</button>
-      <input type="file" id="backupFileInput" style="display:none;" accept=".zip" onchange="handleFileImport(event)">
+<div id="game">
+    <div id="top-bar">
+        <div id="cards-wrapper"></div>
+        <div id="tools"><div class="tool-btn" id="btn-shovel">🪏</div></div>
     </div>
-  </div>
+    <div id="lawn">
+        <div id="hud"><span>❤️ <span id="lives">5</span></span><span>🏆 <span id="score">0</span></span></div>
+        <div id="stage" class="hide"><div id="stage-text"></div><button id="stage-clear">清空</button></div>
+        <div id="guide">点卡片拼读<br>声母一个个点，韵母直接点</div>
+    </div>
+    <div id="tone-modal"><div class="modal-box"><h3>请选声调</h3><div id="tone-base"></div><div class="tone-btns" id="tone-btns"></div></div></div>
+    <div id="overlay"><div class="modal-box"><h2 style="color:#ff6b6b;margin-bottom:10px;">僵尸吃掉了你的脑子！</h2><p style="margin-bottom:15px;">得分：<span id="final-score">0</span></p><button onclick="resetGame()" style="padding:10px 20px;background:#388e3c;color:#fff;border:none;border-radius:8px;font-size:16px;">再来一局</button></div></div>
+    <div id="toast"></div>
 </div>
-<script src="nodes.js"></script>
-<script src="render_engine.js"></script>
+
+<!-- 引入刚才保存的 noodles.js -->
+<script src="noodles.js"></script>
 <script>
-(function() {
-  let _v_sys_a = 15; 
-  let _v_sys_b = 0;
-  let _v_sys_c = 0;
-  let _t_sys_cur = 'dna';
-  
-  const map = document.getElementById('map');
-  const mapWrap = document.getElementById('map-wrap');
-  const svg = document.getElementById('lines');
-  const dnaLabel = document.getElementById('dnaDisplay');
-  const cpsLabel = document.getElementById('cpsDisplay');
-  const rebLabel = document.getElementById('rebDisplay');
-  const ascLabel = document.getElementById('ascDisplay');
-  const btnRebirth = document.getElementById('btnRebirth');
-  const btnAscend = document.getElementById('btnAscend');
-  const zoomSlider = document.getElementById('zoomSlider');
-  let offsetX = 0, offsetY = 0, scale = 0.6;
-  let startX = 0, startY = 0, isDragging = false;
-  
-  zoomSlider.addEventListener('input', function(e) {
-    scale = parseFloat(e.target.value);
-    map.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
-  });
-  
-  function centerView() {
-    let activeNodes = NODES.filter(n => n.type === _t_sys_cur);
-    if(activeNodes.length === 0) return;
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    activeNodes.forEach(n => {
-      if(n.x < minX) minX = n.x;
-      if(n.x > maxX) maxX = n.x;
-      if(n.y < minY) minY = n.y;
-      if(n.y > maxY) maxY = n.y;
-    });
-    let cx = (minX + maxX) / 2;
-    let cy = (minY + maxY) / 2;
-    offsetX = window.innerWidth / 2 - cx * scale;
-    offsetY = (window.innerHeight - 75 - 70) / 2 - cy * scale + 20;
-    map.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
-    zoomSlider.value = scale;
-  }
-  
-  mapWrap.addEventListener('pointerdown', (e) => {
-    if(e.target.closest('.node')) return;
-    isDragging = true; startX = e.clientX - offsetX; startY = e.clientY - offsetY;
-  });
-  mapWrap.addEventListener('pointermove', (e) => {
-    if (!isDragging) return;
-    offsetX = e.clientX - startX; offsetY = e.clientY - startY;
-    map.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
-  });
-  mapWrap.addEventListener('pointerup', () => isDragging = false);
-  mapWrap.addEventListener('pointerleave', () => isDragging = false);
-  
-  document.getElementById('gearIcon').onclick = () => { document.getElementById('settingsPanel').style.display = 'block'; };
-  
-  window.exportSaveFile = async function() {
-    try {
-      let memoryState = { dna: _v_sys_a, reb: _v_sys_b, asc: _v_sys_c, lvs: NODES.map(n => n.level || 0) };
-      let blob = await compileRenderCache(memoryState);
-      let reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onloadend = function() {
-        let a = document.createElement("a");
-        a.style.display = 'none';
-        a.href = reader.result; a.download = "sys_config_backup.zip";
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        alert("加密打包成功！如果没有自动下载，请检查浏览器拦截或去文件管理里找。");
-      };
-    } catch (err) {
-      alert("发生致命错误：" + err.message);
+function addToneMark(py, tone) {
+    if (tone === 0) return py;
+    const marks = {1:{a:'ā',o:'ō',e:'ē',i:'ī',u:'ū','ü':'ǖ'},2:{a:'á',o:'ó',e:'é',i:'í',u:'ú','ü':'ǘ'},3:{a:'ǎ',o:'ǒ',e:'ě',i:'ǐ',u:'ǔ','ü':'ǚ'},4:{a:'à',o:'ò',e:'è',i:'ì',u:'ù','ü':'ǜ'}}[tone];
+    let idx = -1;
+    if (py.includes('a')) idx = py.indexOf('a');
+    else if (py.includes('o')) idx = py.indexOf('o');
+    else if (py.includes('e')) idx = py.indexOf('e');
+    else if (py.includes('iu')) idx = py.indexOf('u');
+    else if (py.includes('ui')) idx = py.indexOf('i');
+    else { for (let i = py.length - 1; i >= 0; i--) { if ('aoeiuü'.includes(py[i])) { idx = i; break; } } }
+    if (idx !== -1) return py.slice(0, idx) + marks[py[idx]] + py.slice(idx + 1);
+    return py;
+}
+
+const lawn = document.getElementById('lawn');
+const cardsBox = document.getElementById('cards-wrapper');
+const stage = document.getElementById('stage');
+const stageText = document.getElementById('stage-text');
+const toastEl = document.getElementById('toast');
+
+let cells = [], cards = [], selections = [], pendingPlant = null, isShovel = false;
+let zombies = [], plants = [], bullets = [];
+let lives = 5, score = 0, running = false, lastTime = 0, spawnTimer = 2, gameTime = 0;
+
+function initGrid() {
+    cells = [];
+    const w = lawn.clientWidth / 9, h = lawn.clientHeight / 5;
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 9; c++) cells.push({ row: r, col: c, cx: c * w + w / 2, cy: r * h + h / 2, w, h, occupied: null });
+    plants.forEach(p => { const cell = cells.find(c => c.row === p.row && c.col === p.col); if (cell) { p.x = cell.cx; p.y = cell.cy; p.el.style.left = p.x + 'px'; p.el.style.top = p.y + 'px'; } });
+    zombies.forEach(z => { const cell = cells.find(c => c.row === z.row); if (cell) { z.y = cell.cy; z.el.style.top = z.y + 'px'; } });
+}
+window.addEventListener('resize', initGrid);
+
+function newCard() {
+    if (zombies.length > 0 && Math.random() < 0.7) {
+        const z = zombies[Math.floor(Math.random() * zombies.length)];
+        if (z.whole) return { type: 'whole', text: z.whole, el: null };
+        if (Math.random() < 0.5) return { type: 'sm', text: (z.sm === 'zh' || z.sm === 'ch' || z.sm === 'sh') ? z.sm[0] : (z.sm || 'x'), el: null };
+        return { type: 'ym', text: z.ym || 'a', el: null };
     }
-  };
-  
-  window.triggerImport = function() {
-    document.getElementById('backupFileInput').value = "";
-    document.getElementById('backupFileInput').click();
-  };
-  
-  window.handleFileImport = async function(e) {
-    let file = e.target.files[0];
-    if (!file) return;
-    try {
-      let parsedData = await loadRenderCache(file);
-      if (!parsedData) { alert("配置文件缺失、损坏或遭到篡改！"); return; }
-      _v_sys_a = parsedData.dna || 15; _v_sys_b = parsedData.reb || 0; _v_sys_c = parsedData.asc || 0;
-      if (parsedData.lvs && parsedData.lvs.length === NODES.length) {
-        NODES.forEach((n, i) => { n.level = parsedData.lvs[i]; });
-      }
-      updateRender(); alert("配置已成功恢复！");
-    } catch (err) {
-      alert("无法读取ZIP文件！错误：" + err.message);
-    }
-  };
-  
-  function isUnlocked(node) {
-    if (!node.req || node.req.length === 0) return true;
-    return node.req.every(r => {
-      let rn = NODES.find(n => n.id === r.id);
-      if (!rn) return false;
-      if (r.lv === 'MAX') return rn.level >= rn.maxLv;
-      return rn.level >= r.lv;
+    const r = Math.random();
+    if (r < 0.33) return { type: 'sm', text: INITIALS[Math.floor(Math.random() * INITIALS.length)], el: null };
+    if (r < 0.66) return { type: 'ym', text: FINALS[Math.floor(Math.random() * FINALS.length)], el: null };
+    return { type: 'whole', text: WHOLE_SYLLABLES[Math.floor(Math.random() * WHOLE_SYLLABLES.length)], el: null };
+}
+
+function renderCards() {
+    cardsBox.innerHTML = '';
+    while (cards.length < 14) cards.push(newCard());
+    cards.forEach(card => {
+        const el = document.createElement('div');
+        el.className = 'card ' + card.type;
+        el.innerHTML = `<div class="text" style="font-size:${card.text.length > 2 ? '12px' : '16px'}">${card.text}</div>`;
+        el.onclick = () => clickCard(card);
+        card.el = el;
+        cardsBox.appendChild(el);
     });
-  }
-  
-  function getCost(node) {
-    if (node.type === 'dna') return Math.floor(node.baseCost * Math.pow(node.costMult, node.level || 0));
-    else return Math.floor(node.baseCost * (node.level + 1));
-  }
-  
-  function calcStats() {
-    let baseCps = 2, dnaPctSum = 0, rebPctSum = 0, ascPctSum = 0, currPctSum = 0, depCpsBonus = 0;
-    NODES.forEach(n => {
-      if(n.level > 0) {
-        if(n.cps) baseCps += n.cps * n.level;
-        if(n.dnaPct) dnaPctSum += n.dnaPct * n.level;
-        if(n.rebPct) rebPctSum += n.rebPct * n.level;
-        if(n.ascPct) ascPctSum += n.ascPct * n.level;
-        if(n.currPct) currPctSum += n.currPct * n.level;
-        if(n.depPct && n.req) {
-          let parent = NODES.find(p => p.id === n.req[0].id);
-          if(parent) depCpsBonus += (parent.cps || 0) * parent.level * (n.depPct * n.level / 100);
+}
+
+function clickCard(card) {
+    if (!running) return;
+    if (isShovel) toggleShovel();
+    if (card.type === 'whole') { selections = [card.text]; checkPinyin(); return; }
+    if (card.type === 'sm') {
+        if (selections.length === 0 || selections[0].type === 'ym') selections = [{ type: 'sm', text: card.text }];
+        else if (selections[0].type === 'sm') {
+            const ext = selections[0].text;
+            if (['z', 'c', 's'].includes(ext) && card.text === 'h') selections[0].text += 'h';
+            else if (ext === 'h' && ['z', 'c', 's'].includes(card.text)) selections[0].text = card.text + 'h';
+            else selections[0].text = card.text;
         }
-      }
+        updateStage(); return;
+    }
+    if (card.type === 'ym') {
+        if (selections.length === 1 && selections[0].type === 'sm') selections.push({ type: 'ym', text: card.text });
+        else selections = [{ type: 'ym', text: card.text }];
+        checkPinyin();
+    }
+}
+
+function updateStage() {
+    if (selections.length === 0) { stage.classList.add('hide'); return; }
+    stage.classList.remove('hide');
+    stageText.textContent = selections.map(s => s.text).join(' + ');
+}
+
+function clearStage() {
+    selections = []; stage.classList.add('hide'); pendingPlant = null;
+    lawn.classList.remove('can-plant');
+    document.getElementById('guide').innerHTML = '点卡片拼读<br>声母一个个点，韵母直接点';
+    document.getElementById('guide').style.color = 'rgba(255,255,255,0.4)';
+}
+document.getElementById('stage-clear').onclick = clearStage;
+
+function checkPinyin() {
+    if (selections.length === 0) return;
+    let base = '';
+    if (selections.length === 1 && selections[0].type === 'sm') { updateStage(); return; }
+    if (selections.length === 1 && !selections[0].type) base = selections[0].text;
+    else {
+        let sm = selections.find(s => s.type === 'sm') ? selections.find(s => s.type === 'sm').text : '';
+        let ym = selections.find(s => s.type === 'ym') ? selections.find(s => s.type === 'ym').text : '';
+        if (['j', 'q', 'x'].includes(sm) && ym.startsWith('ü')) ym = 'u' + ym.slice(1);
+        else if (sm === 'y' && ym === 'ü') { sm = ''; ym = 'yu'; }
+        else if (sm === 'y' && ym.startsWith('ü')) { sm = ''; ym = 'y' + ym; }
+        else if (sm === 'y' && ym === 'u') { sm = ''; ym = 'yu'; }
+        else if (sm === 'w' && ym === 'u') { sm = ''; ym = 'wu'; }
+        base = sm + ym;
+    }
+    if (!base) return;
+    if (!VALID_PINYINS.has(base)) {
+        showToast(`❌ 不支持这种拼法 (${base})`);
+        selections = selections.filter(s => s.type === 'sm'); updateStage(); return;
+    }
+    showToneModal(base);
+}
+
+function showToneModal(base) {
+    const modal = document.getElementById('tone-modal');
+    document.getElementById('tone-base').textContent = base;
+    const box = document.getElementById('tone-btns'); box.innerHTML = '';
+    [1, 2, 3, 4, 0].forEach(t => {
+        const btn = document.createElement('button');
+        btn.textContent = { 1: '一声 ˉ', 2: '二声 ˊ', 3: '三声 ˇ', 4: '四声 ˋ', 0: '轻声 ·' }[t];
+        btn.onclick = () => {
+            modal.classList.remove('show');
+            pendingPlant = { pinyin: addToneMark(base, t) };
+            lawn.classList.add('can-plant');
+            const g = document.getElementById('guide');
+            g.innerHTML = `👉 请点击下方草坪<br>种下「${pendingPlant.pinyin}」`;
+            g.style.color = '#fff';
+            stage.classList.add('hide');
+        };
+        box.appendChild(btn);
     });
-    let currentAssets = Math.floor(_v_sys_a * (currPctSum / 100));
-    let baseTotal = baseCps + currentAssets + depCpsBonus;
-    let finalCps = baseTotal * (1 + dnaPctSum / 100) * (1 + rebPctSum / 100) * (1 + ascPctSum / 100);
-    return { finalCps, rebPctSum, ascPctSum };
-  }
-  
-  function loadTree(type) {
-    _t_sys_cur = type;
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('active');
-    
-    map.innerHTML = '<svg id="lines"></svg>';
-    const svgEl = document.getElementById('lines');
-    const activeNodes = NODES.filter(n => n.type === type);
-    activeNodes.forEach(n => { n.children = []; n.parents = []; });
-    activeNodes.forEach(n => {
-      if (n.req) n.req.forEach(r => {
-        let p = activeNodes.find(x => x.id === r.id);
-        if (p) { p.children.push(n); n.parents.push(p); }
-      });
-    });
-    
-    let rootNodes = activeNodes.filter(n => n.parents.length === 0);
-    function calcDepth(node) {
-      if (node.depth !== undefined) return node.depth;
-      if (node.parents.length === 0) node.depth = 0;
-      else { let maxP = 0; node.parents.forEach(p => { maxP = Math.max(maxP, calcDepth(p) + 1); }); node.depth = maxP; }
-      return node.depth;
-    }
-    activeNodes.forEach(n => calcDepth(n));
-    const NODE_WIDTH = 180, LEVEL_HEIGHT = 240;
-    function calcWidth(node) {
-      if (node.calcW !== undefined) return node.calcW;
-      if (node.children.length === 0) node.calcW = NODE_WIDTH;
-      else { let sum = 0; node.children.forEach(c => { sum += calcWidth(c); }); node.calcW = Math.max(NODE_WIDTH, sum); }
-      return node.calcW;
-    }
-    rootNodes.forEach(r => calcWidth(r));
-    
-    let currentRootX = 0;
-    function assignPos(node, leftX) {
-      let w = node.calcW; node.x = leftX + w / 2; node.y = node.depth * LEVEL_HEIGHT;
-      if (node.children.length > 0) {
-        let childrenW = 0; node.children.forEach(c => { childrenW += c.calcW; });
-        let childLeftX = node.x - childrenW / 2;
-        node.children.forEach(c => { assignPos(c, childLeftX); childLeftX += c.calcW; });
-      }
-    }
-    rootNodes.forEach(r => { assignPos(r, currentRootX); currentRootX += r.calcW + 200; });
-    
-    activeNodes.forEach(node => {
-      let nodeElement = document.createElement('div');
-      nodeElement.className = 'node ' + node.type;
-      nodeElement.id = 'node-' + node.id;
-      nodeElement.style.left = node.x + 'px'; nodeElement.style.top = node.y + 'px';
-      
-      let descText = "";
-      if (node.cps) descText = "特性: 增加基础产出";
-      if (node.dnaPct) descText = "特性: 增加全局DNA%";
-      if (node.rebPct) descText = "特性: 增加重生币收益%";
-      if (node.ascPct) descText = "特性: 增加飞升币收益%";
-      if (node.currPct) descText = "特性: 基于当前资产加成%";
-      if (node.depPct) descText = "特性: 继承前置产出%";
-      
-      nodeElement.innerHTML = `
-        <div class="n-title">${node.name}</div>
-        <div class="n-lvl" id="lvl-${node.id}">0/${node.maxLv}</div>
-        <div class="n-desc">${descText}</div>
-        <div class="n-gain" id="gain-${node.id}"></div>
-        <div class="n-cost" id="cost-${node.id}"></div>
-        <div class="n-req" id="req-${node.id}"></div>
-      `;
-      
-      nodeElement.onclick = () => {
-        if (isUnlocked(node) && node.level < node.maxLv) {
-          let cost = getCost(node);
-          let type = node.type;
-          if (type === 'dna' && _v_sys_a >= cost) { _v_sys_a -= cost; node.level++; updateRender(); }
-          else if (type === 'reb' && _v_sys_b >= cost) { _v_sys_b -= cost; node.level++; updateRender(); }
-          else if (type === 'asc' && _v_sys_c >= cost) { _v_sys_c -= cost; node.level++; updateRender(); }
+    const c = document.createElement('button');
+    c.textContent = '取消'; c.style.background = '#eee';
+    c.onclick = () => { modal.classList.remove('show'); clearStage(); };
+    box.appendChild(c); modal.classList.add('show');
+}
+
+function toggleShovel() {
+    isShovel = !isShovel;
+    document.getElementById('btn-shovel').classList.toggle('active', isShovel);
+    lawn.classList.toggle('can-shovel', isShovel);
+    if (isShovel) { clearStage(); showToast('🪏 点击植物铲除'); }
+}
+document.getElementById('btn-shovel').onclick = toggleShovel;
+
+lawn.addEventListener('click', (e) => {
+    if (!running) return;
+    const rect = lawn.getBoundingClientRect();
+    const cx = e.clientX - rect.left, cy = e.clientY - rect.top;
+    const cell = cells.find(c => cx >= c.cx - c.w / 2 && cx <= c.cx + c.w / 2 && cy >= c.cy - c.h / 2 && cy <= c.cy + c.h / 2);
+    if (!cell) return;
+    if (isShovel) {
+        if (cell.occupied) {
+            cell.occupied.el.remove();
+            plants = plants.filter(p => p !== cell.occupied);
+            cell.occupied = null;
+            showToast('植物已铲除');
         }
-      };
-      map.appendChild(nodeElement);
-      
-      if (node.parents) {
-        node.parents.forEach(parent => {
-          let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          let midY = (parent.y + node.y) / 2;
-          let d = `M ${parent.x} ${parent.y} C ${parent.x} ${midY}, ${node.x} ${midY}, ${node.x} ${node.y}`;
-          path.setAttribute('d', d); path.setAttribute('fill', 'none');
-          path.setAttribute('stroke', '#30363d'); path.setAttribute('stroke-width', '3');
-          path.id = `line-${parent.id}-${node.id}`; svgEl.appendChild(path);
-        });
-      }
-    });
-    
-    btnRebirth.style.display = type === 'dna' ? 'block' : 'none';
-    btnAscend.style.display = type === 'reb' ? 'block' : 'none';
-    centerView(); updateRender();
-  }
-  
-  window.switchTab = function(type) { loadTree(type); };
-  
-  window.doRebirth = function() {
-    let req = 1000000 * Math.pow(2, _v_sys_b);
-    if (_v_sys_a >= req) {
-      if(!confirm("确定重塑肉身吗？DNA清零，获得1次重生。")) return;
-      _v_sys_a = 15; _v_sys_b++; NODES.filter(n => n.type === 'dna').forEach(n => n.level = 0); loadTree(_t_sys_cur);
+        toggleShovel(); return;
     }
-  };
-  
-  window.doAscend = function() {
-    let req = 5 + _v_sys_c * 5;
-    if (_v_sys_b >= req) {
-      if(!confirm("确定突破飞升吗？重生币清零，获得1次飞升。")) return;
-      _v_sys_b = 0; _v_sys_c++; NODES.filter(n => n.type === 'dna' || n.type === 'reb').forEach(n => n.level = 0); loadTree(_t_sys_cur);
-    }
-  };
-  
-  function updateRender() {
-    let stats = calcStats();
-    dnaLabel.innerText = Math.floor(_v_sys_a);
-    cpsLabel.innerText = "每秒: " + stats.finalCps.toFixed(1);
-    rebLabel.innerText = _v_sys_b;
-    ascLabel.innerText = _v_sys_c;
-    
-    let reqReb = 1000000 * Math.pow(2, _v_sys_b);
-    btnRebirth.innerText = `重塑肉身 (需 ${reqReb >= 1e9 ? reqReb.toExponential(1) : reqReb} DNA)`;
-    btnRebirth.disabled = _v_sys_a < reqReb;
-    
-    let reqAsc = 5 + _v_sys_c * 5;
-    btnAscend.innerText = `突破飞升 (需 ${reqAsc} 次重生)`;
-    btnAscend.disabled = _v_sys_b < reqAsc;
-    
-    NODES.forEach(node => {
-      if(node.type !== _t_sys_cur) return;
-      let div = document.getElementById('node-' + node.id);
-      if (!div) return;
-      document.getElementById('lvl-' + node.id).innerText = `${node.level || 0}/${node.maxLv}`;
-      
-      let gainText = [];
-      if(node.cps) gainText.push(`+${node.cps * node.level}/s`);
-      if(node.dnaPct) gainText.push(`DNA +${node.dnaPct * node.level}%`);
-      if(node.rebPct) gainText.push(`重生 +${node.rebPct * node.level}%`);
-      if(node.ascPct) gainText.push(`飞升 +${node.ascPct * node.level}%`);
-      if(node.currPct) gainText.push(`当前 +${node.currPct * node.level}%`);
-      if(node.depPct) gainText.push(`继承 +${node.depPct * node.level}%`);
-      document.getElementById('gain-' + node.id).innerText = node.level > 0 ? gainText.join('\n') : '';
-      
-      let cost = getCost(node);
-      let costText = node.type === 'dna' ? cost : (node.type === 'reb' ? `需 ${cost} 重生` : `需 ${cost} 飞升`);
-      document.getElementById('cost-' + node.id).innerText = node.level >= node.maxLv ? "MAX" : costText;
-      
-      let unlocked = isUnlocked(node);
-      document.getElementById('req-' + node.id).innerText = (node.req && !unlocked) ? "需前置满级" : "";
-      
-      div.className = 'node ' + node.type;
-      if (node.level >= node.maxLv) div.classList.add('max');
-      else if (!unlocked) div.classList.add('lock');
-      else {
-        let can = false;
-        if (node.type === 'dna') can = _v_sys_a >= cost;
-        else if (node.type === 'reb') can = _v_sys_b >= cost;
-        else if (node.type === 'asc') can = _v_sys_c >= cost;
-        if (can) div.classList.add('can');
-      }
-      
-      if (node.parents) node.parents.forEach(parent => {
-        let path = document.getElementById(`line-${parent.id}-${node.id}`);
-        if (path) {
-          let met = parent.level >= parent.maxLv;
-          path.setAttribute('stroke', met ? '#10b981' : '#30363d');
+    if (!pendingPlant) { showToast('❌ 请先在顶部拼出拼音！'); return; }
+    if (cell.occupied) { showToast('这里已经有植物了！'); return; }
+    const el = document.createElement('div');
+    el.className = 'plant';
+    el.innerHTML = `<div class="p-pinyin">${pendingPlant.pinyin}</div><div class="p-emoji">🌻</div>`;
+    el.style.left = cell.cx + 'px'; el.style.top = cell.cy + 'px'; lawn.appendChild(el);
+    const p = { row: cell.row, col: cell.col, x: cell.cx, y: cell.cy, pinyin: pendingPlant.pinyin, hp: 100, cooldown: 0.5, el, cell };
+    cell.occupied = p; plants.push(p);
+    cards = []; renderCards(); clearStage();
+});
+
+function spawnZombie() {
+    const word = WORDS[Math.floor(Math.random() * WORDS.length)];
+    const py = addToneMark(word.p, word.t);
+    const row = Math.floor(Math.random() * 5);
+    const cell = cells.find(c => c.row === row);
+    if (!cell) return;
+    const el = document.createElement('div');
+    el.className = 'zombie';
+    el.innerHTML = `<div class="z-head"><div class="z-char">${word.c}</div><div class="z-pinyin">${py}</div></div><div class="z-body">🧟</div><div class="z-hp"><div class="z-hp-bar"></div></div>`;
+    let x = lawn.clientWidth + 40;
+    el.style.left = x + 'px'; el.style.top = cell.cy + 'px'; lawn.appendChild(el);
+    zombies.push({ row, x, y: cell.cy, hp: 100, maxHp: 100, speed: Math.max(12, 25 - gameTime * 0.5), pinyin: py, sm: word.sm, ym: word.ym, whole: word.whole, el, dead: false });
+}
+
+function update(dt) {
+    for (let i = zombies.length - 1; i >= 0; i--) {
+        const z = zombies[i];
+        if (z.dead) { zombies.splice(i, 1); continue; }
+        let blocked = false;
+        for (let p of plants) {
+            if (p.row === z.row && Math.abs(p.x - z.x) < 40) {
+                blocked = true; p.hp -= 50 * dt;
+                if (p.hp <= 0) { p.el.remove(); p.cell.occupied = null; plants = plants.filter(pl => pl !== p); }
+                break;
+            }
         }
-      });
-    });
-  }
-  
-  setInterval(() => { 
-    _v_sys_a += calcStats().finalCps; 
-    updateRender();
-  }, 1000);
-  
-  loadTree('dna');
-})();
+        if (!blocked) {
+            z.x -= z.speed * dt; z.el.style.left = z.x + 'px';
+            if (z.x < -40) {
+                z.dead = true; z.el.remove(); lives--; updateHUD();
+                if (lives <= 0) endGame();
+            }
+        }
+    }
+    for (let p of plants) {
+        p.cooldown -= dt;
+        if (p.cooldown <= 0) {
+            const t = zombies.find(z => z.row === p.row && z.pinyin === p.pinyin && !z.dead && z.x > 0);
+            if (t) {
+                const el = document.createElement('div');
+                el.className = 'bullet'; el.style.left = p.x + 'px'; el.style.top = p.y + 'px'; lawn.appendChild(el);
+                bullets.push({ x: p.x, y: p.y, target: t, speed: 400, damage: 50, el });
+                p.cooldown = 0.6;
+            }
+        }
+    }
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i], t = b.target;
+        if (!t || t.dead) { b.el.remove(); bullets.splice(i, 1); continue; }
+        const dx = t.x - b.x, dist = Math.abs(dx), step = b.speed * dt;
+        if (dist <= step + 10) {
+            t.hp -= b.damage; t.el.querySelector('.z-hp-bar').style.width = Math.max(0, t.hp / t.maxHp * 100) + '%';
+            if (t.hp <= 0) { t.dead = true; t.el.classList.add('die'); setTimeout(() => t.el.remove(), 400); score += 20; updateHUD(); }
+            b.el.remove(); bullets.splice(i, 1);
+        } else { b.x += Math.sign(dx) * step; b.el.style.left = b.x + 'px'; }
+    }
+}
+
+function updateHUD() { document.getElementById('lives').textContent = lives; document.getElementById('score').textContent = score; }
+let toastTimer = null;
+function showToast(msg) { toastEl.textContent = msg; toastEl.className = 'show'; clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.className = '', 2000); }
+function endGame() { running = false; document.getElementById('final-score').textContent = score; document.getElementById('overlay').classList.add('show'); }
+
+function loop(time) {
+    if (!running) return;
+    if (!lastTime) lastTime = time;
+    const dt = Math.min((time - lastTime) / 1000, 0.05); lastTime = time; gameTime += dt;
+    spawnTimer -= dt;
+    if (spawnTimer <= 0) { spawnZombie(); spawnTimer = Math.max(1.5, 4 - gameTime * 0.05); }
+    update(dt); requestAnimationFrame(loop);
+}
+
+window.resetGame = function() {
+    lawn.querySelectorAll('.zombie, .plant, .bullet').forEach(el => el.remove());
+    zombies = []; plants = []; bullets = []; lives = 5; score = 0; running = true; gameTime = 0; spawnTimer = 2; lastTime = 0;
+    clearStage(); isShovel = false; document.getElementById('btn-shovel').classList.remove('active'); lawn.classList.remove('can-shovel');
+    initGrid(); cards = []; renderCards(); updateHUD(); document.getElementById('overlay').classList.remove('show'); requestAnimationFrame(loop);
+};
+resetGame();
 </script>
 </body>
 </html>
